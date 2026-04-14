@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <style>
+        body{
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #baf8da;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1{
+            color: #333;
+            margin: 20px;
+        }
+
+        .container{
+            background-color: #ffffff;
+            padding: 30px;
+            border: 2px dashed #666;
+            border-radius: 40px;
+            text-align: center;
+            width: 350px;
+        }
+
+        .upload_button p{
+            margin: 10px;
+            color: #666;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.5s;
+        }
+
+        .upload_button p:hover{
+            color: #10b981
+        }
+
+        input[type = "file"]{
+            display: none;
+        }
+
+        img{
+            margin-top: 15px;
+            max-width: 100%;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .confirm_button{
+            float: right;
+            margin-top: 20px;
+            padding: 10px 20px;
+            width: 150px;
+            border: none;
+            background: #10b981;
+            color: #ffffff;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.5s;
+        }
+
+        .confirm_button:hover{
+            background: #0d9b6b;
+        }
+
+        .retry_button{
+            float: left;
+            margin-top: 20px;
+            padding: 10px 20px;
+            width: 150px;
+            border: none;
+            background: #f76565;
+            color: #ffffff;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.5s;
+        }
+
+        .retry_button:hover{
+            background: #f55050;
+        }
+    </style>
+
+    <h1>Upload Food Image</h1>
+
+    <div class = "container">
+        
+
+        <label class = "upload_button" for = "fileInput">
+            <p>Click To Upload Image</p>
+        </label>
+
+        <input type = "file" id = "fileInput" accept = "image/*">
+
+        <img id = "preview" alt = "Image Preview">
+
+        <br>
+
+        <button class = "retry_button" onclick="reset_image()">Retry</button>
+
+        <button class = "confirm_button" onclick = "confirm_image()">Confirm</button>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+
+                reader.addEventListener('load', function() {
+                    preview.src = this.result;
+                    preview.style.display = 'block';
+                });
+
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function reset_image() {
+            fileInput.value = "";
+            preview.src = "";
+            preview.style.display = "none";
+        }
+
+        function confirm_image() {
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please upload an image first!");
+                return;
+            }
+
+            alert("Image submitted! (Connect this to Flask backend)");
+        }
+    </script>
+</body>
+</html>
