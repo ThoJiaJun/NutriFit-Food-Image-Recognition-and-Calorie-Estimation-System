@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register - NutriFit</title>
+<style>
+  body { 
+    font-family: Arial;
+         background: linear-gradient(to 135deg, #667eea, #764ba2);
+          display: flex;
+          justify-content: center; 
+          align-items: center; 
+          height: 100vh; margin: 0;
+         }
+    .container {
+        background-color: white;
+             padding: 40px;
+             border-radius: 20px;
+             width: 400px;
+            }
+         h1 {
+        text-align: center;
+        color: #764ba2;
+    }
+    input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+    }
+    button {
+        width: 100%;
+        padding: 12px;
+        background-color: #764ba2;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+    .flash {
+        padding: 10px;
+        border-radius: 10px;
+        margin: 10px 0;
+    }
+    .success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    a {
+        color : #764ba2;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>NutriFit</h1>
+        <h3>Register</h3>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="post">
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Register</button>
+
+        </form>
+        <p style="text-align:center">
+            Already have an account? <a href="/login">Login here</a>
+        </p>
+    </div>
+</body>
+</html>
