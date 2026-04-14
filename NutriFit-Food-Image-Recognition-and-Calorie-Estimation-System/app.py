@@ -12,7 +12,7 @@ db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
 class User(db.Model):
-    _tablename__ = 'users'
+    __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -67,9 +67,9 @@ def login():
 
         user = User.query.filter_by(email=email).first()
 
-    if user and user.check_password(password):
+        if user and user.check_password(password):
             return redirect(url_for('profile', user_id=user.id))
-    else:
+        else:
             flash('Invalid email or password!', 'danger')
     
     return render_template('login.html')
@@ -93,5 +93,6 @@ def profile(user_id):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
-if __name__ == '__main__':    app.run(debug=True)
+    return render_template('login.html')
+if __name__ == '__main__':  
+     app.run(debug=True)
