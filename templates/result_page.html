@@ -101,27 +101,27 @@
     <h1>Result</h1>
 
     <div class = "container">
-        <div class = "food_name">(Food Name)</div>
+        <div class = "food_name">{{food["name"]}}</div>
 
         <div class = "grid">
             <div class = "item">
                 <span class = "nutrition">Calories</span>
-                <span class = "value">350 kcal</span>
+                <span class = "value">{{food["calories"]}}</span>
             </div>
 
             <div class = "item">
                 <span class = "nutrition">Carbs</span>
-                <span class = "value">50 g</span>
+                <span class = "value">{{food["carbs"]}}</span>
             </div>
 
             <div class = "item">
                 <span class = "nutrition">Proteins</span>
-                <span class = "value">15 g</span>
+                <span class = "value">{{food["protein"]}}</span>
             </div>
 
             <div class = "item">
                 <span class = "nutrition">Fats</span>
-                <span class = "value">10 g</span>
+                <span class = "value">{{food["fats"]}}</span>
             </div>
         </div>
     </div>
