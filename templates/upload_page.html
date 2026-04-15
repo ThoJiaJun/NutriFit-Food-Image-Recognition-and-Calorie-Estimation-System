@@ -19,20 +19,28 @@
         }
 
         h1{
+            font-size: 48px;
             color: #333;
-            margin: 20px;
         }
 
         .container{
+            display:flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
             background-color: #ffffff;
             padding: 30px;
             border: 2px dashed #666;
             border-radius: 40px;
             text-align: center;
-            width: 350px;
+            width: 75%;
+            max-width: 720px;
+            height: 50%;
+            max-height: 240px;
         }
 
-        .upload_button p{
+        .upload p{
             margin: 10px;
             color: #666;
             font-weight: bold;
@@ -41,7 +49,7 @@
             transition: 0.5s;
         }
 
-        .upload_button p:hover{
+        .upload p:hover{
             color: #10b981
         }
 
@@ -49,47 +57,48 @@
             display: none;
         }
 
-        img{
-            margin-top: 15px;
-            max-width: 100%;
-            border-radius: 10px;
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
             display: none;
         }
 
-        .confirm_button{
-            float: right;
-            margin-top: 20px;
-            padding: 10px 20px;
-            width: 150px;
-            border: none;
-            background: #10b981;
+        button{
+            flex: 1;
+            padding: 20px;
             color: #ffffff;
-            font-weight: bold;
-            border-radius: 8px;
+            font-size: 22px;
+            border: none;
+            border-radius: 15px;
             cursor: pointer;
             transition: 0.5s;
         }
 
-        .confirm_button:hover{
-            background: #0d9b6b;
+        .buttons{
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            width: 85%;
+            max-width: 780px;
         }
 
-        .retry_button{
-            float: left;
-            margin-top: 20px;
-            padding: 10px 20px;
-            width: 150px;
-            border: none;
-            background: #f76565;
-            color: #ffffff;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.5s;
+        .retry{
+            background-color: #f76565;
         }
 
-        .retry_button:hover{
-            background: #f55050;
+        .retry:hover{
+            background-color: #f55050;
+        }
+
+        .confirm{
+            background-color: #10b981;
+        }
+
+        .confirm:hover{
+            background-color: #0d9b6b;
         }
     </style>
 
@@ -98,7 +107,7 @@
     <div class = "container">
         
 
-        <label class = "upload_button" for = "fileInput">
+        <label class = "upload" for = "fileInput">
             <p>Click To Upload Image</p>
         </label>
 
@@ -106,11 +115,11 @@
 
         <img id = "preview" alt = "Image Preview">
 
-        <br>
-
-        <button class = "retry_button" onclick="reset_image()">Retry</button>
-
-        <button class = "confirm_button" onclick = "confirm_image()">Confirm</button>
+    </div>
+    
+    <div class = "buttons">
+        <button class = "retry" onclick="reset_image()">Try Again</button>
+        <button class = "confirm" onclick = "confirm_image()">Confirm Image</button>
     </div>
 
     <script>
@@ -146,7 +155,7 @@
                 return;
             }
 
-            alert("Image submitted! (Connect this to Flask backend)");
+            alert("Image submitted!");      <!--will connect to flask for food recognition-->
         }
     </script>
 </body>
