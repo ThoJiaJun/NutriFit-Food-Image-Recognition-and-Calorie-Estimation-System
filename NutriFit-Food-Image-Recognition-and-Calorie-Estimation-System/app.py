@@ -24,6 +24,7 @@ class User(db.Model):
     gender = db.Column(db.String(10), default='')
     activity_level = db.Column(db.String(20), default='moderate')
     goal = db.Column(db.String(20), default='maintain')
+    favorite_color = db.Column(db.String(50), default='')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, password):
@@ -31,6 +32,7 @@ class User(db.Model):
 
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password_hash, password)
+
 with app.app_context():
     db.create_all()
     print("Database tables created successfully.")
@@ -42,16 +44,17 @@ def register():
         email = request.form['email']
         password = request.form['password']
         confirm = request.form['confirm_password']
+        favorite_color = request.form['favorite_color']
 
         if password != confirm:
-            flash('Passwords do not match.', 'error')
+            flash('Passwords do not match!', 'danger')
             return redirect(url_for('register'))
 
         if User.query.filter_by(email=email).first():
             flash('Email already exists!', 'danger')
             return redirect(url_for('register'))
         
-        user = User(name=name, email=email)
+        user = User(name=name, email=email, favorite_color=favorite_color)
         user.set_password(password) 
         db.session.add(user)
         db.session.commit()
@@ -94,5 +97,6 @@ def profile(user_id):
 @app.route('/')
 def index():
     return redirect(url_for('login'))
+
 if __name__ == '__main__':  
-     app.run(debug=True)
+    app.run(debug=True)
