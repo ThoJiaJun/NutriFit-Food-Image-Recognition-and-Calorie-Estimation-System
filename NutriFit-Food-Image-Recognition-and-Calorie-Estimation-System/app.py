@@ -24,7 +24,6 @@ class User(db.Model):
     gender = db.Column(db.String(10), default='')
     activity_level = db.Column(db.String(20), default='moderate')
     goal = db.Column(db.String(20), default='maintain')
-    favorite_color = db.Column(db.String(50), default='')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, password):
@@ -44,7 +43,6 @@ def register():
         email = request.form['email']
         password = request.form['password']
         confirm = request.form['confirm_password']
-        favorite_color = request.form['favorite_color']
 
         if password != confirm:
             flash('Passwords do not match!', 'danger')
@@ -54,7 +52,7 @@ def register():
             flash('Email already exists!', 'danger')
             return redirect(url_for('register'))
         
-        user = User(name=name, email=email, favorite_color=favorite_color)
+        user = User(name=name, email=email)
         user.set_password(password) 
         db.session.add(user)
         db.session.commit()
