@@ -24,6 +24,7 @@ class User(db.Model):
     gender = db.Column(db.String(10), default='')
     activity_level = db.Column(db.String(20), default='moderate')
     goal = db.Column(db.String(20), default='maintain')
+    favorite_color = db.Column(db.String(50), default='')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, password):
@@ -43,6 +44,7 @@ def register():
         email = request.form['email']
         password = request.form['password']
         confirm = request.form['confirm_password']
+        favorite_color = request.form['favorite_color']
 
         if password != confirm:
             flash('Passwords do not match!', 'danger')
@@ -52,7 +54,7 @@ def register():
             flash('Email already exists!', 'danger')
             return redirect(url_for('register'))
         
-        user = User(name=name, email=email)
+        user = User(name=name, email=email, favorite_color=favorite_color)
         user.set_password(password) 
         db.session.add(user)
         db.session.commit()
@@ -91,6 +93,39 @@ def profile(user_id):
         flash('Profile updated successfully!', 'success')
         return redirect(url_for('profile', user_id=user.id))
     return render_template('profile.html', user=user)
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        favorite_color = request.form['favorite_color']
+        
+        user = User.query.filter_by(email=email).first()
+        
+        if user and user.favorite_color == favorite_color:
+            flash('Color verified! Please set your new password.', 'success')
+            return redirect(url_for('reset_password', email=email))
+        else:
+            flash('Invalid email or color!', 'danger')
+    
+    return render_template('forgot_password.html')
+
+@app.route('/reset_password/<email>', methods=['GET', 'POST'])
+def reset_password(email):
+    if request.method == 'POST':
+        new_password = request.form['new_password']
+        confirm = request.form['confirm_password']
+        
+        if new_password != confirm:
+            flash('Passwords do not match!', 'danger')
+        else:
+            user = User.query.filter_by(email=email).first()
+            user.set_password(new_password)
+            db.session.commit()
+            flash('Password reset successful! Please login.', 'success')
+            return redirect(url_for('login'))
+    
+    return render_template('reset_password.html', email=email)
 
 @app.route('/')
 def index():
