@@ -98,15 +98,18 @@
             <span id = "total_calories">Total Calories: 0 kcal</span>
         </div>
 
-        <div id = "foods"></div>
+        <div id = "meal_list"></div>
     </div>
 
     <script>
         const buttons = document.querySelectorAll(".tabs button");
-        const foods = document.getElementById("foods");
+        const meal_list = document.getElementById("meal_list");
         const total_calories = document.getElementById("total_calories");
+        const date_picker = document.getElementById("date_picker");
 
         function active_tab(tab){
+            current_tab = tab;
+            
             buttons.forEach(btn => btn.classList.remove("active"));
             document.getElementById(tab).classList.add("active");
 
@@ -119,6 +122,73 @@
             else if(tab === "monthly"){
                 date_picker.type = "month"
             }
+
+            load_meals(current_tab, date_picker.value);
+        }
+
+        async function load_meals(type, date){
+            if(! date) return;
+
+            const response = await fetch(`/get_meals?type=${type}&date=${date}`);
+            const data = await response.json();
+
+            if(type === "daily"){
+                render_daily(data);
+            }
+            else if(type === "weekly"){
+                render_weekly(data);
+            }
+            else if(type === "monthly"){
+                render_monthly(data);
+            }
+        }
+
+        function render_daily(data){
+            meal_list.innerHTML = "";
+            let total_kcal = 0;
+
+            if(data.length === 0){
+                meal_list.innerHTML = "<p>No meals found</p>";
+                total_calories.innerText = "Total Calories: 0 kcal";
+                return;
+            }
+
+            data.forEach((meal, index) => {
+                total_kcal += meal.calories;
+
+                meal_list.innerHTML += `
+                    <div style="margin-bottom:20px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>${index + 1}. ${meal.food_name}</span>
+                            <span>${meal.calories} kcal</span>
+                        </div>
+                        <div style="margin-left: 20px; display: flex; gap: 30px;">
+                            <span>Carbs: ${meal.carbs}</span>
+                            <span>Protein: ${meal.protein}</span>
+                            <span>Fats: ${meal.fats}</span>
+                        </div>
+                    </div>`;
+            });
+
+            total_calories.innerText = `Total Calories: ${total_kcal} kcal`;
+        }
+
+        function render_weekly(data){
+            meal_list.innerHTML = "";
+            let total_kcal = 0;
+
+            meal_list.innerHTML = "<p>No meals found</p>";
+            total_calories.innerText = "Total Calories: 0 kcal";
+            return;
+        }
+
+        function render_monthly(data){
+            meal_list.innerHTML = "";
+            let total_kcal = 0;
+
+            meal_list.innerHTML = "<p>No meals found</p>";
+            total_calories.innerText = "Total Calories: 0 kcal";
+            return;
         }
 
         buttons.forEach(button => {
@@ -126,6 +196,11 @@
                 active_tab(button.id);
             });
         });
+
+        date_picker.addEventListener("change", () => {
+            load_meals(current_tab, date_picker.value);
+        });
+
 
         active_tab("daily");
     </script>
