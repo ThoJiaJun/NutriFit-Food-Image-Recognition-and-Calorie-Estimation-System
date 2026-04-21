@@ -101,34 +101,59 @@
     <h1>Result</h1>
 
     <div class = "container">
-        <div class = "food_name">{{food["name"]}}</div>
+        <div class = "food_name" id = "food_name">{{food["name"]}}</div>
 
         <div class = "grid">
             <div class = "item">
                 <span class = "nutrition">Calories</span>
-                <span class = "value">{{food["calories"]}}</span>
+                <span class = "value" id = "calories">{{food["calories"]}}</span>
             </div>
 
             <div class = "item">
                 <span class = "nutrition">Carbs</span>
-                <span class = "value">{{food["carbs"]}}</span>
+                <span class = "value" id = "carbs">{{food["carbs"]}}</span>
             </div>
 
             <div class = "item">
                 <span class = "nutrition">Proteins</span>
-                <span class = "value">{{food["protein"]}}</span>
+                <span class = "value" id = "protein">{{food["protein"]}}</span>
             </div>
 
             <div class = "item">
                 <span class = "nutrition">Fats</span>
-                <span class = "value">{{food["fats"]}}</span>
+                <span class = "value" id = "fats">{{food["fats"]}}</span>
             </div>
         </div>
     </div>
 
     <div class = "buttons">
         <button class = "retry">Try Again</button>
-        <button class = "confirm">Confirm Meal</button>
+        <button class = "confirm" onclick="confirm_meal()">Confirm Meal</button>
     </div>
+
+    <script>
+        function confirm_meal(){
+            let meal_data = {
+                food_name: document.getElementById("food_name").innerText,
+                calories: parseFloat(document.getElementById("calories").innerText),
+                carbs: parseFloat(document.getElementById("carbs").innerText),
+                protein: parseFloat(document.getElementById("protein").innerText),
+                fats: parseFloat(document.getElementById("fats").innerText),
+                servings: 1
+            };
+
+            fetch("/save_meal", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(meal_data)
+            })
+
+            .then(res => res.json())
+            .then(() => {
+                alert("Meal saved!");
+                window.location.href = "/history";
+            });
+        }
+    </script>
 </body>
 </html>
