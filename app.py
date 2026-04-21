@@ -8,7 +8,7 @@ UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Initialize Roboflow model
-rf = Roboflow(api_key="EcLMIpZXu4IRkUeokYSi")  # replace with your actual API key
+rf = Roboflow(api_key="EcLMIpZXu4IRkUeokYSi")
 project = rf.workspace("usernames-workspace").project("food-detection-epzr3-qaj9d")
 model = project.version(2).model
 
