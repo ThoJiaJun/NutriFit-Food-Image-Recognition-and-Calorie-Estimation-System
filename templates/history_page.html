@@ -74,6 +74,12 @@
             border-bottom: 2px solid #666;
         }
 
+        .keepleft{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         #date_picker{
             border: none;
             outline: none;
@@ -94,7 +100,10 @@
 
     <div class = "container">
         <div class = "header">
-            <input type = "date" id = "date_picker">
+            <div class = "keepleft">
+                <input type = "date" id = "date_picker">
+                <span id = "week_label"></span>
+            </div>
             <span id = "total_calories">Total Calories: 0 kcal</span>
         </div>
 
@@ -106,6 +115,7 @@
         const meal_list = document.getElementById("meal_list");
         const total_calories = document.getElementById("total_calories");
         const date_picker = document.getElementById("date_picker");
+        const week_label = document.getElementById("week_label");
 
         function active_tab(tab){
             current_tab = tab;
@@ -117,14 +127,32 @@
                 date_picker.type = "date"
             }
             else if(tab === "weekly"){
-                date_picker.type = "week"
+                date_picker.type = "date"
             } 
             else if(tab === "monthly"){
                 date_picker.type = "month"
             }
 
+            date_display(current_tab)
             load_meals(current_tab, date_picker.value);
         }
+
+        function date_display(tab){
+            const date = new Date();
+
+            if(tab === "daily"){
+                const today = date.toISOString().split("T")[0];
+                date_picker.value = today;
+            }
+            else if(tab === "weekly"){
+                const today = date.toISOString().split("T")[0];
+                date_picker.value = today;
+            }
+            else if (tab === "monthly"){
+                const current_month = date.toISOString().slice(0, 7);
+                date_picker.value = current_month
+            }
+        };
 
         async function load_meals(type, date){
             if(! date) return;
@@ -132,11 +160,14 @@
             const response = await fetch(`/get_meals?type=${type}&date=${date}`);
             const data = await response.json();
 
+            week_label.innerHTML = "";
+
             if(type === "daily"){
                 render_daily(data);
             }
             else if(type === "weekly"){
                 render_weekly(data);
+                week_label.innerHTML = `[ Week ${data.week}, ${data.year} ]`;
             }
             else if(type === "monthly"){
                 render_monthly(data);
@@ -157,12 +188,12 @@
                 total_kcal += meal.calories;
 
                 meal_list.innerHTML += `
-                    <div style="margin-bottom:20px;">
-                        <div style="display: flex; justify-content: space-between;">
+                    <div style = "margin-bottom: 20px;">
+                        <div style = "display: flex; justify-content: space-between;">
                             <span>${index + 1}. ${meal.food_name}</span>
                             <span>${meal.calories} kcal</span>
                         </div>
-                        <div style="margin-left: 20px; display: flex; gap: 30px;">
+                        <div style = "margin-left: 20px; display: flex; gap: 30px;">
                             <span>Carbs: ${meal.carbs}</span>
                             <span>Protein: ${meal.protein}</span>
                             <span>Fats: ${meal.fats}</span>

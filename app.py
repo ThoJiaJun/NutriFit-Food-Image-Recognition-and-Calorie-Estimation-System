@@ -82,7 +82,16 @@ def get_meals():
 
         connection.close()
         return jsonify(data)
+    elif history_tab == "weekly":
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
+        year = date_obj.isocalendar()[0]
+        week = date_obj.isocalendar()[1]
 
+        return jsonify({
+            "year": year,
+            "week": week,
+        })
+    
     connection.close()
     return jsonify([])
 
