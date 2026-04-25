@@ -62,7 +62,7 @@ def get_meals():
 
     if history_tab == "daily":
         cursor.execute("""
-            SELECT food_name, calories, carbs, protein, fats, servings
+            SELECT id, food_name, calories, carbs, protein, fats, servings
             FROM meal_history
             WHERE date = ?
         """, (date,))
@@ -72,6 +72,7 @@ def get_meals():
         data = []
         for r in rows:
             data.append({
+                "id": r["id"],
                 "food_name": r["food_name"],
                 "calories": r["calories"],
                 "carbs": r["carbs"],
@@ -94,6 +95,23 @@ def get_meals():
     
     connection.close()
     return jsonify([])
+
+@app.route("/delete_meal", methods = ["POST"])
+def delete_meal():
+    data = request.get_json()
+
+    connection = sqlite3.connect("database/meal_history.db")
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        DELETE FROM meal_history
+        WHERE id = ?
+    """, (data["id"],))
+
+    connection.commit()
+    connection.close()
+
+    return jsonify({"message": "Meal deleted successfully!"})
 
 if __name__ == '__main__':
     app.run(debug = True)
