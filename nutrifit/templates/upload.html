@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NutriFit Upload</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            height: 100vh;
+            background: linear-gradient(135deg, #4facfe, #8e2de2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 40px;
+            font-weight: bold;
+            color: white;
+            text-shadow:
+                -2px -2px 0 black,
+                2px -2px 0 black,
+                -2px 2px 0 black,
+                2px 2px 0 black;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        }
+
+        input {
+            margin-top: 10px;
+            padding: 10px;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            margin: 5px;
+            font-size: 14px;
+            border: none;
+        }
+
+        .back {
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .back:hover {
+            background: white;
+            color: black;
+        }
+
+        .continue {
+            background: white;
+            color: #4facfe;
+        }
+
+        .continue:hover {
+            background: #8e2de2;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- TITLE -->
+<div class="title">NutriFit</div>
+
+<!-- UPLOAD BOX -->
+<div class="box">
+
+    <h3>Upload Your Food Image</h3>
+
+    <!-- 🔥 IMPORTANT: FORM MUST BE CORRECT -->
+    <form action="/upload" method="post" enctype="multipart/form-data">
+
+        <!-- MUST BE name="file" -->
+        <input type="file" name="file" required>
+
+        <br><br>
+
+        <!-- BUTTONS INSIDE FORM -->
+        <button type="button" class="btn back" onclick="window.location.href='/'">
+            Back
+        </button>
+
+        <button type="submit" class="btn continue">
+            Continue
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>
