@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime
+import calendar
 import sqlite3
 
 app = Flask(__name__)
@@ -88,9 +89,112 @@ def get_meals():
         year = date_obj.isocalendar()[0]
         week = date_obj.isocalendar()[1]
 
+        cursor.execute("""
+            SELECT date, id, food_name, calories, carbs, protein, fats, servings
+            FROM meal_history
+            WHERE strftime('%Y', date) = ?
+            AND strftime('%W', date) = ?
+            ORDER BY date
+        """, (str(year), f"{week - 1:02d}"))
+
+        rows = cursor.fetchall()
+
+        grouped = {}
+        total_week_kcal = 0
+        total_carbs = 0
+        total_protein = 0
+        total_fats = 0
+
+        for r in rows:
+            d = r["date"]
+
+            if d not in grouped:
+                grouped[d] = {
+                    "meals": [],
+                    "total": 0
+                }
+
+            grouped[d]["meals"].append({
+                "food_name": r["food_name"],
+                "calories": r["calories"]
+            })
+
+            grouped[d]["total"] += r["calories"]
+
+            total_week_kcal += r["calories"]
+            total_carbs += r["carbs"]
+            total_protein += r["protein"]
+            total_fats += r["fats"]
+
+        connection.close()
         return jsonify({
             "year": year,
             "week": week,
+            "total_kcal": total_week_kcal,
+            "total_carbs": round(total_carbs, 2),
+            "total_protein": round(total_protein, 2),
+            "total_fats": round(total_fats, 2),
+            "days": grouped
+        })
+    elif history_tab == "monthly":
+        year, month = date.split("-")
+
+        cursor.execute("""
+            SELECT date, calories, carbs, protein, fats
+            FROM meal_history
+            WHERE strftime('%Y', date) = ?
+            AND strftime('%m', date) = ?
+        """, (year, month))
+
+        rows = cursor.fetchall()
+
+        weekly = {}
+        total_month_kcal = 0
+        total_carbs = 0
+        total_protein = 0
+        total_fats = 0
+
+        month_start = datetime(int(year), int(month), 1)
+        month_end = datetime(int(year), int(month), calendar.monthrange(int(year), int(month))[1])
+
+        for r in rows:
+            date_obj = datetime.strptime(r["date"], "%Y-%m-%d")
+            year = date_obj.isocalendar()[0]
+            week = date_obj.isocalendar()[1]
+
+            week_start = datetime.fromisocalendar(year, week, 1)
+            week_end = datetime.fromisocalendar(year, week, 7)
+
+            range_start = max(week_start, month_start)
+            range_end = min(week_end, month_end)
+
+            if week not in weekly:
+                weekly[week] = {
+                    "calories": 0,
+                    "carbs": 0,
+                    "protein": 0,
+                    "fats": 0,
+                    "start_date": range_start.strftime("%Y-%m-%d"),
+                    "end_date": range_end.strftime("%Y-%m-%d")
+                }
+
+            weekly[week]["calories"] += r["calories"]
+            weekly[week]["carbs"] += r["carbs"]
+            weekly[week]["protein"] += r["protein"]
+            weekly[week]["fats"] += r["fats"]
+
+            total_month_kcal += r["calories"]
+            total_carbs += r["carbs"]
+            total_protein += r["protein"]
+            total_fats += r["fats"]
+
+        connection.close()
+        return jsonify({
+            "total_kcal": total_month_kcal,
+            "total_carbs": round(total_carbs, 2),
+            "total_protein": round(total_protein, 2),
+            "total_fats": round(total_fats, 2),
+            "weeks": weekly
         })
     
     connection.close()
