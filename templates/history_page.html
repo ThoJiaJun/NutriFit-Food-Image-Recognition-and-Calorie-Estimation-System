@@ -129,6 +129,12 @@
         .cancel_dlt:hover{
             background-color: #d1d5db;
         }
+
+        #total_nutrition{
+            display: flex;
+            margin-top: 20px;
+            gap: 40px;
+        }
     </style>
 
     <h1>Meal History</h1>
@@ -149,6 +155,7 @@
         </div>
 
         <div id = "meal_list"></div>
+        <div id = "total_nutrition"></div>
     </div>
 
     <div id = "popup">
@@ -164,6 +171,7 @@
         const buttons = document.querySelectorAll(".tabs button");
         const meal_list = document.getElementById("meal_list");
         const total_calories = document.getElementById("total_calories");
+        const total_nutrition = document.getElementById("total_nutrition")
         const date_picker = document.getElementById("date_picker");
         const week_label = document.getElementById("week_label");
         const popup = document.getElementById("popup");
@@ -228,53 +236,119 @@
         function render_daily(data){
             meal_list.innerHTML = "";
             let total_kcal = 0;
+            let total_carbs = 0;
+            let total_protein = 0;
+            let total_fats = 0;
 
             if(data.length === 0){
                 meal_list.innerHTML = "<p>No meals found</p>";
                 total_calories.innerText = "Total Calories: 0 kcal";
+                total_nutrition.innerHTML = "";
                 return;
             }
 
             data.forEach((meal, index) => {
                 total_kcal += meal.calories;
+                total_carbs += meal.carbs;
+                total_protein += meal.protein;
+                total_fats += meal.fats;
 
                 meal_list.innerHTML += `
-                    <div style = "margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px;">
-                        <span title = "Delete Meal" style = "cursor: pointer; font-size: 18px;" onclick = "show_popup(${meal.id})">🗑️</span>
-                        
-                        <div style = "width: 100%;">
-                            <div style = "display: flex; justify-content: space-between;">
-                                <span>${index + 1}. ${meal.food_name}</span>
-                                <span>${meal.calories} kcal</span>
-                            </div>
-                            <div style = "margin-left: 20px; margin-top: 5px; display: flex; gap: 30px;">
+                    <div style = "margin-bottom: 20px;">
+                        <div style = "display: flex; justify-content: space-between; align-items: flex-start;">
+                            <span>${index + 1}. ${meal.food_name}</span>
+                            <span>${meal.calories} kcal</span>
+                        </div>
+
+                        <div style = "margin-left: 20px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style = "display: flex; gap: 30px;">
                                 <span>Carbs: ${meal.carbs} g</span>
                                 <span>Protein: ${meal.protein} g</span>
                                 <span>Fats: ${meal.fats} g</span>
                             </div>
+                            <span title = "Delete Meal" style = "margin-top: 5px; cursor: pointer; font-size: 18px;" onclick = "show_popup(${meal.id})">🗑️</span>
                         </div>
+
+                        <div style = "margin-top: 10px; border-bottom: 2px dashed #ccc;"></div>
                     </div>`;
             });
 
             total_calories.innerText = `Total Calories: ${total_kcal} kcal`;
+            total_nutrition.innerHTML = `
+                <span>Total Carbs: ${total_carbs} g</span>
+                <span>Total Protein: ${total_protein} g</span>
+                <span>Total Fats: ${total_fats} g</span>`;
         }
 
         function render_weekly(data){
             meal_list.innerHTML = "";
             let total_kcal = 0;
 
-            meal_list.innerHTML = "<p>No meals found</p>";
-            total_calories.innerText = "Total Calories: 0 kcal";
-            return;
+            if(!data.days || Object.keys(data.days).length === 0){
+                meal_list.innerHTML = "<p>No meals found</p>";
+                total_calories.innerText = "Total Calories: 0 kcal";
+                total_nutrition.innerHTML = "";
+                return;
+            }
+
+            total_calories.innerText = `Total Calories: ${data.total_kcal} kcal`;
+
+            for(const date in data.days){
+                meal_list.innerHTML += `
+                    <div style = "margin-bottom: 20px;">
+                        <strong>${date}</strong>`;
+
+                data.days[date].meals.forEach((meal, index) => {
+                    meal_list.innerHTML += `
+                        <div style = "display: flex; justify-content: space-between;">
+                            <span>${index+1}. ${meal.food_name}</span>
+                            <span>${meal.calories} kcal</span>
+                        </div>
+                    `;
+                });
+
+                meal_list.innerHTML += `</div>`;
+                meal_list.innerHTML += `<div style = "margin-top: 10px; margin-bottom: 10px; border-bottom: 2px dashed #ccc;"></div>`
+            }
+
+            total_nutrition.innerHTML = `
+                <span>Total Carbs: ${data.total_carbs} g</span>
+                <span>Total Protein: ${data.total_protein} g</span>
+                <span>Total Fats: ${data.total_fats} g</span>
+            `;
         }
 
         function render_monthly(data){
             meal_list.innerHTML = "";
-            let total_kcal = 0;
 
-            meal_list.innerHTML = "<p>No meals found</p>";
-            total_calories.innerText = "Total Calories: 0 kcal";
-            return;
+            if(!data.weeks || Object.keys(data.weeks).length === 0){
+                meal_list.innerHTML = "<p>No meals found</p>";
+                total_calories.innerText = "Total Calories: 0 kcal";
+                total_nutrition.innerHTML = "";
+                return;
+            }
+
+            total_calories.innerText = `Total Calories: ${data.total_kcal} kcal`;
+
+            for(const week in data.weeks){
+                meal_list.innerHTML += `
+                    <div style = "display: flex; justify-content: space-between; margin: 10px 0px;">
+                        <span>
+                            Week ${week}
+                            <br>
+                            <small>${data.weeks[week].start_date} - ${data.weeks[week].end_date}</small>
+                        </span>
+                        <span>Total Calories: ${data.weeks[week].calories} kcal</span>
+                    </div>
+                    <div style = "margin-top: 20px; border-bottom: 2px dashed #ccc;"></div>
+                `;
+            }
+
+            total_nutrition.innerHTML = `
+                <span>Total Carbs: ${data.total_carbs} g</span>
+                <span>Total Protein: ${data.total_protein} g</span>
+                <span>Total Fats: ${data.total_fats} g</span>
+            `;
         }
 
         function show_popup(id){
