@@ -2,35 +2,90 @@
 <html>
 <head>
     <title>Detection Result</title>
-</head>
-<body style="text-align:center;">
 
-<h2>Detection Result</h2>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #f4f4f4;
+        }
+
+        img {
+            width: 400px;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            background: white;
+            margin: 10px auto;
+            padding: 10px;
+            width: 300px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            padding: 10px 15px;
+            margin: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .edit {
+            background: #ff9800;
+            color: white;
+        }
+
+        .retry {
+            background: #f44336;
+            color: white;
+        }
+
+        .continue {
+            background: #4facfe;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Food Detection Result</h2>
 
 {% if image_file %}
-    <img src="{{ url_for('static', filename='uploads/' + image_file) }}" width="400">
+    <img src="{{ url_for('static', filename='uploads/' + image_file) }}">
 {% endif %}
 
-<h3>Detected Food (Estimated Weight)</h3>
+<h3>Detected Food</h3>
 
 {% if detections %}
-    <ul>
-        {% for item in detections %}
-            <li>{{ item.food }} - {{ item.weight }} g</li>
-        {% endfor %}
-    </ul>
+<ul>
+    {% for item in detections %}
+        <li>
+            🍽 {{ item.food }} <br>
+            ⚖ {{ item.weight }} g
+        </li>
+    {% endfor %}
+</ul>
 {% else %}
-    <p>No food detected</p>
+<p>No food detected</p>
 {% endif %}
 
-<br>
-
 <a href="/continue">
-    <button>Continue</button>
+    <button class="btn edit">Edit Food</button>
 </a>
 
 <a href="/try_again">
-    <button>Try Again</button>
+    <button class="btn retry">Try Again</button>
 </a>
 
 </body>
