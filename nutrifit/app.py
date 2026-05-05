@@ -15,7 +15,7 @@ MODEL_PATH = os.path.join(BASE_DIR, "model", "yolov8n.pt")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # -------------------------
-# LOAD MODEL (LOCAL ONLY)
+# LOAD MODEL
 # -------------------------
 if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError("Model not found in /model folder!")
@@ -23,11 +23,27 @@ if not os.path.exists(MODEL_PATH):
 model = YOLO(MODEL_PATH)
 
 # -------------------------
-# FOOD FILTER LIST
+# FOOD CLASSES (filter)
 # -------------------------
 FOOD_CLASSES = {
     "apple", "banana", "orange", "broccoli", "carrot",
     "hot dog", "pizza", "donut", "cake", "sandwich"
+}
+
+# -------------------------
+# SIMPLE WEIGHT MAP
+# -------------------------
+FOOD_WEIGHT_MAP = {
+    "pizza": 250,
+    "apple": 180,
+    "banana": 120,
+    "donut": 90,
+    "cake": 200,
+    "sandwich": 150,
+    "orange": 130,
+    "broccoli": 100,
+    "carrot": 80,
+    "hot dog": 160
 }
 
 # -------------------------
@@ -36,17 +52,15 @@ FOOD_CLASSES = {
 latest_image = None
 latest_detections = []
 
-
 # -------------------------
-# HOME
+# HOME PAGE
 # -------------------------
 @app.route('/')
 def home():
     return render_template("upload.html")
 
-
 # -------------------------
-# UPLOAD + DETECT + WEIGHT
+# UPLOAD + DETECT
 # -------------------------
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -62,16 +76,11 @@ def upload():
     image_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(image_path)
 
-    latest_image = file.filename
-
-    # Run YOLO
+    # Run YOLO detection
     results = model(image_path)[0]
-
     img = cv2.imread(image_path)
 
     detections = []
-
-    SCALE_FACTOR = 0.01  # adjust later for better accuracy
 
     # -------------------------
     # DETECTION LOOP
@@ -79,23 +88,20 @@ def upload():
     for box in results.boxes:
 
         cls_id = int(box.cls[0])
-        conf = float(box.conf[0])
-
         label = model.names[cls_id]
 
         if label in FOOD_CLASSES:
 
             x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-            # Draw bounding box
+            # Draw box
             cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
-            # Estimate weight
-            area = (x2 - x1) * (y2 - y1)
-            weight = int(area * SCALE_FACTOR)
+            # Estimate weight (Member 2)
+            weight = FOOD_WEIGHT_MAP.get(label, 100)
 
+            # Label on image
             text = f"{label} {weight}g"
-
             cv2.putText(img, text,
                         (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX,
@@ -126,7 +132,7 @@ def upload():
     for item in detections:
         label = item["food"]
 
-        if label not in unique or item["weight"] > unique[label]["weight"]:
+        if label not in unique:
             unique[label] = item
 
     latest_detections = list(unique.values())
@@ -137,9 +143,8 @@ def upload():
         detections=latest_detections
     )
 
-
 # -------------------------
-# CONTINUE PAGE
+# CONTINUE PAGE (EDIT)
 # -------------------------
 @app.route('/continue')
 def continue_page():
@@ -149,7 +154,6 @@ def continue_page():
         detections=latest_detections
     )
 
-
 # -------------------------
 # TRY AGAIN
 # -------------------------
@@ -157,9 +161,8 @@ def continue_page():
 def try_again():
     return redirect(url_for('home'))
 
-
 # -------------------------
 # RUN APP
 # -------------------------
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
