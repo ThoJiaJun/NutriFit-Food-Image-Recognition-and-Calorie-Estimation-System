@@ -4,52 +4,88 @@
     <title>Edit Food</title>
 
     <style>
-        body { font-family: Arial; text-align: center; }
-
-        .item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 60%;
-            margin: auto;
-            padding: 10px;
-            border: 1px solid #ccc;
-            margin-bottom: 10px;
-        }
-
-        input {
-            padding: 5px;
-            width: 150px;
-        }
-
-        button {
-            padding: 5px;
-            cursor: pointer;
-        }
-
-        .hidden {
-            display: none;
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #f5f5f5;
         }
 
         img {
-            width: 400px;
-            margin-top: 20px;
+            width: 350px;
+            margin-top: 15px;
+            border-radius: 10px;
+        }
+
+        .item {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px auto;
+            background: white;
+            padding: 10px;
+            width: 60%;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        input {
+            padding: 6px;
+        }
+
+        button {
+            padding: 8px 12px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .add {
+            background: #4caf50;
+            color: white;
+        }
+
+        .continue {
+            background: #4facfe;
+            color: white;
+        }
+
+        .delete {
+            background: #f44336;
+            color: white;
+        }
+
+        .toggle {
+            background: #ff9800;
+            color: white;
+        }
+
+        .back {
+            background: #333;
+            color: white;
+        }
+
+        .toast {
+            display: none;
+            background: black;
+            color: white;
+            padding: 10px;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 6px;
         }
     </style>
 </head>
 
 <body>
 
-<h2>Food Edit Page</h2>
+<h2>Edit Food Detection</h2>
 
 {% if image_file %}
     <img src="{{ url_for('static', filename='uploads/' + image_file) }}">
 {% endif %}
-
-<br><br>
-
-<button onclick="toggleEdit()">Enable Edit Mode</button>
-<button onclick="addFood()">+ Add Missing Food</button>
 
 <h3>Detected Items</h3>
 
@@ -57,16 +93,9 @@
 
     {% for item in detections %}
     <div class="item">
-
-        <!-- FOOD NAME -->
-        <input type="text" value="{{ item.food }}" class="food">
-
-        <!-- GRAMS -->
-        <input type="number" value="{{ item.weight }}" class="grams">
-
-        <!-- DELETE -->
-        <button onclick="removeItem(this)">Delete</button>
-
+        <input type="text" class="food" value="{{ item.food }}">
+        <input type="number" class="weight" value="{{ item.weight }}">
+        <button class="delete" onclick="removeItem(this)">X</button>
     </div>
     {% endfor %}
 
@@ -74,60 +103,77 @@
 
 <br>
 
-<button onclick="saveData()">Save Changes</button>
+<!-- BUTTONS -->
+<button class="add" onclick="addFood()">+ Add Food</button>
+<button class="toggle" onclick="toggleEdit()">Toggle Edit</button>
+<button class="continue" onclick="continueProcess()">Continue</button>
 
 <br><br>
 
 <a href="/">
-    <button>Back Home</button>
+    <button class="back">⬅ Go Back</button>
 </a>
 
+<div class="toast" id="toast">Data Ready ✔</div>
+
 <script>
-    let editMode = true;
 
-    function toggleEdit() {
-        editMode = !editMode;
+let editMode = true;
 
-        document.querySelectorAll("input").forEach(input => {
-            input.disabled = !editMode;
+function removeItem(btn) {
+    btn.parentElement.remove();
+}
+
+function addFood() {
+    let div = document.createElement("div");
+    div.className = "item";
+
+    div.innerHTML = `
+        <input type="text" class="food" placeholder="Food">
+        <input type="number" class="weight" placeholder="Weight">
+        <button class="delete" onclick="removeItem(this)">X</button>
+    `;
+
+    document.getElementById("list").appendChild(div);
+}
+
+function toggleEdit() {
+    editMode = !editMode;
+
+    document.querySelectorAll(".food, .weight").forEach(input => {
+        input.disabled = !editMode;
+    });
+
+    alert(editMode ? "Edit Mode ON" : "Edit Mode OFF");
+}
+
+function continueProcess() {
+    let data = [];
+
+    document.querySelectorAll(".item").forEach(item => {
+        data.push({
+            food: item.querySelector(".food").value,
+            weight: item.querySelector(".weight").value
         });
+    });
 
-        alert(editMode ? "Edit Mode ON" : "Edit Mode OFF");
-    }
+    console.log("Sending to Member 3:", data);
 
-    function removeItem(btn) {
-        btn.parentElement.remove();
-    }
+    showToast();
 
-    function addFood() {
-        const list = document.getElementById("list");
+    // OPTIONAL FUTURE INTEGRATION:
+    // window.location.href = "/member3";
+}
 
-        const div = document.createElement("div");
-        div.className = "item";
+function showToast() {
+    let toast = document.getElementById("toast");
+    toast.style.display = "block";
 
-        div.innerHTML = `
-            <input type="text" placeholder="Food name" class="food">
-            <input type="number" placeholder="grams" class="grams">
-            <button onclick="removeItem(this)">Delete</button>
-        `;
+    setTimeout(() => {
+        toast.style.display = "none";
+    }, 2000);
+}
 
-        list.appendChild(div);
-    }
-
-    function saveData() {
-        let items = [];
-
-        document.querySelectorAll(".item").forEach(div => {
-            let food = div.querySelector(".food").value;
-            let grams = div.querySelector(".grams").value;
-
-            items.push({ food, grams });
-        });
-
-        console.log("Saved Data:", items);
-
-        alert("Changes saved (demo mode)");
-    }
 </script>
 
 </body>
