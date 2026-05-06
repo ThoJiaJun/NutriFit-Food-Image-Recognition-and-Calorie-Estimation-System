@@ -1,11 +1,274 @@
-from flask import Flask, render_template, request, jsonify
-from datetime import datetime
+from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_bcrypt import Bcrypt
+from datetime import datetime, timezone
 import calendar
 import sqlite3
+import os
+import cv2
+from ultralytics import YOLO
 
 app = Flask(__name__)
 
-# Result Page Logic
+app.config['SECRET_KEY'] = 'your-secret-key-here-12345'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
+
+class User(db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+    height = db.Column(db.Float, default=0)
+    weight = db.Column(db.Float, default=0)
+    age = db.Column(db.Integer, default=0)
+    gender = db.Column(db.String(10), default='')
+    activity_level = db.Column(db.String(20), default='moderate')
+    goal = db.Column(db.String(20), default='maintain')
+    favorite_color = db.Column(db.String(50), default='')
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+
+    def set_password(self, password):
+        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.password_hash, password)
+
+with app.app_context():
+    db.create_all()
+    print("Database tables created successfully.")
+
+# PATH SETUP #
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+MODEL_PATH = os.path.join(BASE_DIR, "model", "yolov8n.pt")
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# LOAD MODEL (LOCAL ONLY) #
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError("Model not found in /model folder!")
+
+model = YOLO(MODEL_PATH)
+
+# FOOD FILTER LIST #
+FOOD_CLASSES = {
+    "apple", "banana", "orange", "broccoli", "carrot",
+    "hot dog", "pizza", "donut", "cake", "sandwich"
+}
+
+# TEMP STORAGE #
+latest_image = None
+latest_detections = []
+
+####################
+# Login Page Logic #
+####################
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and user.check_password(password):
+            session['user_id'] = user.id
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid email or password!', 'danger')
+    
+    return render_template('login_page.html')
+
+#######################
+# Register Page Logic #
+#######################
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        confirm = request.form['confirm_password']
+        favorite_color = request.form['favorite_color']
+
+        if password != confirm:
+            flash('Passwords do not match!', 'danger')
+            return redirect(url_for('register'))
+
+        if User.query.filter_by(email=email).first():
+            flash('Email already exists!', 'danger')
+            return redirect(url_for('register'))
+        
+        user = User(name=name, email=email, favorite_color=favorite_color)
+        user.set_password(password) 
+        db.session.add(user)
+        db.session.commit()
+        flash('Registration successful! Please log in.', 'success')
+        return redirect(url_for('login'))
+    return render_template('register_page.html')
+
+############################################
+# Forgot Password and Reset Password Logic #
+############################################
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        favorite_color = request.form['favorite_color']
+        
+        user = User.query.filter_by(email=email).first()
+        
+        if user and user.favorite_color == favorite_color:
+            flash('Color verified! Please set your new password.', 'success')
+            return redirect(url_for('reset_password', email=email))
+        else:
+            flash('Invalid email or color!', 'danger')
+    
+    return render_template('forgot_password.html')
+
+@app.route('/reset_password/<email>', methods=['GET', 'POST'])
+def reset_password(email):
+    if request.method == 'POST':
+        new_password = request.form['new_password']
+        confirm = request.form['confirm_password']
+        
+        if new_password != confirm:
+            flash('Passwords do not match!', 'danger')
+        else:
+            user = User.query.filter_by(email=email).first()
+            user.set_password(new_password)
+            db.session.commit()
+            flash('Password reset successful! Please login.', 'success')
+            return redirect(url_for('login'))
+    
+    return render_template('reset_password.html', email=email)
+
+###################
+# Dashboard Logic #
+###################
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get_or_404(session['user_id'])
+    return render_template('dashboard.html', user=user)
+
+################
+# Logout Logic #
+################
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('login'))
+
+######################
+# Profile Page Logic #
+######################
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get_or_404(session['user_id'])
+
+    if request.method == 'POST':
+        user.name = request.form['name']
+        user.height = float(request.form.get('height', 0))
+        user.weight = float(request.form.get('weight', 0))
+        user.age = int(request.form.get('age', 0))
+        user.gender = request.form.get('gender', '')
+        user.activity_level = request.form.get('activity_level')
+        user.goal = request.form.get('goal')
+
+        db.session.commit()
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('profile'))
+
+    return render_template('profile.html', user=user)
+
+#####################
+# Upload Page Logic #
+#####################
+@app.route("/upload", methods=['GET', 'POST'])
+def upload_img():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+
+    user = User.query.get(session['user_id'])
+
+    if request.method == 'POST':
+        file = request.files['file']
+
+        if file.filename == "":
+            return "No file selected"
+
+        # Save image
+        image_path = os.path.join(UPLOAD_FOLDER, file.filename)
+        file.save(image_path)
+
+        # Run YOLO
+        results = model(image_path)[0]
+
+        detections = []
+
+        SCALE_FACTOR = 0.01
+
+        for box in results.boxes:
+            cls_id = int(box.cls[0])
+            label = model.names[cls_id]
+
+            if label in FOOD_CLASSES:
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                area = (x2 - x1) * (y2 - y1)
+                weight = int(area * SCALE_FACTOR)
+
+                detections.append({
+                    "food": label,
+                    "weight": weight
+                })
+
+        # If nothing detected
+        if not detections:
+            return "No food detected"
+
+        # Take first detected food
+        detected_food = detections[0]["food"]
+
+        # Map to your database naming
+        food_name_map = {
+            "apple": "Apple (Red) (1 unit)",
+            "banana": "Banana (1 unit)",
+            "orange": "Orange (1 unit)",
+            "broccoli": "Broccoli (1 floweret)",
+            "carrot": "Carrot (1 slice)",
+            "hot dog": "Hotdog (1 unit)",
+            "pizza": "Pizza (1 piece)",
+            "donut": "Donut (sugar) (1 piece)",
+            "sandwich": "Sandwich (egg mayo) (1 piece)"
+        }
+
+        db_name = food_name_map.get(detected_food)
+
+        if not db_name:
+            return "Food not mapped in database"
+
+        session['food_name'] = db_name
+
+        return redirect(url_for('result'))
+
+    return render_template("upload_page.html", user=user)
+
+#####################
+# Result Page Logic #
+#####################
 def get_food_info(food_name):
     connection = sqlite3.connect("database/food.db")
     connection.row_factory = sqlite3.Row
@@ -24,17 +287,36 @@ def get_food_info(food_name):
 
 @app.route("/result")
 def result():
-    food = get_food_info("Banana (1 unit)")     # parameter will be replaced later with model output
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+    
+    if 'food_name' not in session:
+        return redirect(url_for('upload_img'))
 
-    return render_template("result_page.html", food = food)
+    food = get_food_info(session['food_name'])
 
-# History Page Logic
+    if not food:
+        return "Food not found in database"
+
+    return render_template("result_page.html", food = food, user = user)
+
+######################
+# History Page Logic #
+######################
 @app.route("/history")
 def history():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    
     return render_template("history_page.html")
 
 @app.route("/save_meal", methods = ["POST"])
 def save_meal():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    
     data = request.get_json()
     today = datetime.now().strftime("%Y-%m-%d")
     
@@ -44,7 +326,7 @@ def save_meal():
     cursor.execute("""
         INSERT INTO meal_history(user_id, food_name, calories, carbs, protein, fats, servings, date)
         VALUES(?, ?, ?, ?, ?, ?, ?, ?)""", 
-        (1, data["food_name"], data["calories"], data["carbs"], data["protein"], data["fats"], data["servings"], today))
+        (session["user_id"], data["food_name"], data["calories"], data["carbs"], data["protein"], data["fats"], data["servings"], today))
 
     connection.commit()
 
@@ -54,6 +336,9 @@ def save_meal():
 
 @app.route("/get_meals")
 def get_meals():
+    if 'user_id' not in session:
+        return jsonify([])
+    
     history_tab = request.args.get("type")
     date = request.args.get("date")
 
@@ -65,8 +350,8 @@ def get_meals():
         cursor.execute("""
             SELECT id, food_name, calories, carbs, protein, fats, servings
             FROM meal_history
-            WHERE date = ?
-        """, (date,))
+            WHERE date = ? AND user_id = ?
+        """, (date, session["user_id"]))
 
         rows = cursor.fetchall()
 
@@ -94,8 +379,9 @@ def get_meals():
             FROM meal_history
             WHERE strftime('%Y', date) = ?
             AND strftime('%W', date) = ?
+            AND user_id = ?
             ORDER BY date
-        """, (str(year), f"{week - 1:02d}"))
+        """, (str(year), f"{week - 1:02d}", session["user_id"]))
 
         rows = cursor.fetchall()
 
@@ -144,7 +430,8 @@ def get_meals():
             FROM meal_history
             WHERE strftime('%Y', date) = ?
             AND strftime('%m', date) = ?
-        """, (year, month))
+            AND user_id = ?
+        """, (year, month, session["user_id"]))
 
         rows = cursor.fetchall()
 
@@ -202,6 +489,9 @@ def get_meals():
 
 @app.route("/delete_meal", methods = ["POST"])
 def delete_meal():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    
     data = request.get_json()
 
     connection = sqlite3.connect("database/meal_history.db")
@@ -210,7 +500,8 @@ def delete_meal():
     cursor.execute("""
         DELETE FROM meal_history
         WHERE id = ?
-    """, (data["id"],))
+        AND user_id = ?
+    """, (data["id"], session["user_id"]))
 
     connection.commit()
     connection.close()

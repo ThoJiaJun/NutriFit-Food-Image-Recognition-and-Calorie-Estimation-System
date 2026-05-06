@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register - NutriFit</title>
+    <style>
+        body { 
+            font-family: Arial;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            width: 450px;
+        }
+        h1 {
+            text-align: center;
+            color: #764ba2;
+        }
+        h3 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .flash {
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        a {
+            color: #764ba2;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NutriFit</h1>
+        <h3>Register</h3>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <label>Full Name</label>
+            <input type="text" name="name" placeholder="Full Name" required>
+
+            <label>Email</label>
+            <input type="email" name="email" placeholder="Email" required>
+
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Password" required>
+
+            <label>Confirm Password</label>
+            <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+
+            <label>Favorite Color (for password reset)</label>
+            <select name="favorite_color" required>
+                <option value="">Select a color</option>
+                <option value="red">🔴 Red</option>
+                <option value="blue">🔵 Blue</option>
+                <option value="green">🟢 Green</option>
+                <option value="purple">🟣 Purple</option>
+                <option value="pink">🌸 Pink</option>
+                <option value="black">⚫ Black</option>
+                <option value="white">⚪ White</option>
+            </select>
+
+            <button type="submit">Register</button>
+        </form>
+        <p style="text-align:center">
+            Already have an account? <a href="/login">Login here</a>
+        </p>
+    </div>
+</body>
+</html>
