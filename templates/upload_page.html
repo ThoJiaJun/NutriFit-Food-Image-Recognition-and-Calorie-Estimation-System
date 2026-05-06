@@ -17,6 +17,29 @@
             height: 100vh;
         }
 
+        .navbar{
+            width: 100%;
+            background-color: #a3f6ce;
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 40px;
+            box-sizing: border-box;
+        }
+
+        .navbar a{
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .logo{
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         h1{
             font-size: 48px;
             color: #333;
@@ -111,6 +134,10 @@
 </head>
 
 <body>
+    <div class = "navbar">
+        <a href = "/dashboard"><h1 title = "Back to Dashboard" class = "logo">🍏 NutriFit</h1></a>
+    </div>
+    
     <h1>Upload Food Image</h1>
 
     <form action = "/upload" method = "post" enctype = "multipart/form-data">
