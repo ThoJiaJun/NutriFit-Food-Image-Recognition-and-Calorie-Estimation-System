@@ -3,19 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
+    <title>Result Page</title>
+
     <style>
         body{
             margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #baf8da;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #baf8da;
+            min-height: 100vh;
+        }
+
+        .navbar{
+            width: 100%;
+            background-color: #a3f6ce;
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 40px;
+            box-sizing: border-box;
+        }
+
+        .navbar a{
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .logo{
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
         h1{
@@ -97,6 +118,11 @@
             background-color: #0d9b6b;
         }
     </style>
+</head>
+<body>    
+    <div class = "navbar">
+        <a href = "/dashboard"><h1 title = "Back to Dashboard" class = "logo">🍏 NutriFit</h1></a>
+    </div>
     
     <h1>Result</h1>
 
@@ -127,8 +153,8 @@
     </div>
 
     <div class = "buttons">
-        <button class = "retry">Try Again</button>
-        <button class = "confirm" onclick="confirm_meal()">Confirm Meal</button>
+        <button class = "retry" onclick = "window.location.href = '/upload'">Try Again</button>
+        <button class = "confirm" onclick = "confirm_meal()">Confirm Meal</button>
     </div>
 
     <script>
