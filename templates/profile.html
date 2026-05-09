@@ -3,28 +3,85 @@
 <head>
     <title>Profile - NutriFit</title>
     <style>
-        body {        
-            font-family: Arial;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
+        body {
             margin: 0;
+            font-family: Arial;
+            background-color: #baf8da;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+        .navbar {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            width: 100%;
+            border-bottom: 1px solid #666;
+            background-color: #a3f6ce;
+        }
+
+        .navbar a {
+            text-decoration: none;
+            cursor: pointer;
+        }
+        h1 {
+            margin: 10px;
+            color: #333;
+            font-size: 30px;
+        }
+        .user_button {
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.5s;
+        }
+        .user_button:hover {
+            background: #e6f4ee;
+        }
+        .dropdown {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            width: 150px;
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            overflow: hidden;
+            display: none;
+        }
+        .dropdown a {
+            display: block;
+            padding: 14px 18px;
+            text-decoration: none;
+            color: #333;
+            transition: 0.2s;
+        } 
+        .dropdown a:hover {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        .dropdown.show {
+            display: block;
         }
         .container {
             background: white;
-            padding: 40px;
+            padding: 0 40px;
             border-radius: 20px;
             width: 500px;
         }
-        h1 {
+        h2 {
             text-align: center;
-            color: #764ba2;
+            font-size: 40px;
+            margin-bottom: 0;
         }
         h3 {
             text-align: center;
+            font-size: 30px;
             color: #333;
+            margin-top: 0;
         }
         label {
             display: block;
@@ -44,16 +101,17 @@
         button {
             width: 100%;
             padding: 12px;
-            background: #764ba2;
+            margin-top: 20px;
+            background: #10b981;
             color: white;
+            font-size: 16px;
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
+            transition: 0.5s;
         }
         button:hover {
-            background: #5a3a7a;
+            background: #0d9b6b;
         }
         .flash {
             padding: 10px;
@@ -70,8 +128,11 @@
             color: #721c24;
         }
         a {
-            color: #764ba2;
+            color: #10b981;
             text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
         }
         .email-display {
             background: #f5f5f5;
@@ -94,9 +155,21 @@
     </style>
 </head>
 <body>
+    <div class="navbar">
+        <h1>🍏 NutriFit</h1>
+        <h1>Your Personal Info</h1>
+        <div>
+            <h1 title="User Dropdown" class="user_button">👤 {{ user.name }}</h1>
+
+            <div class="dropdown">
+                <a href="/logout">Logout</a>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
-        <h1>NutriFit</h1>
-        <h3>My Profile</h3>
+        <h2>👤</h2>
+        <h3>{{ user.name }}</h3>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -107,8 +180,8 @@
         {% endwith %}
         
         <form method="POST">
-            <label>Full Name</label>
-            <input type="text" name="name" value="{{ user.name }}" placeholder="Full Name" required>
+            <label>Name</label>
+            <input type="text" name="name" value="{{ user.name }}" placeholder="Name" required>
 
             <div class="email-display">
                 Email: {{ user.email }}
@@ -158,5 +231,24 @@
             <a href="/dashboard">Back to Dashboard</a>
         </p>
     </div>
+
+<script>
+    const user_button = document.querySelector(".user_button");
+    const dropdown = document.querySelector(".dropdown");
+
+    user_button.addEventListener("click", () => {
+        dropdown.classList.toggle("show");
+    });
+
+    document.addEventListener("click", (event) => {
+        if(
+            !user_button.contains(event.target) &&
+            !dropdown.contains(event.target)
+        ){
+            dropdown.classList.remove("show");
+        }
+
+    });
+</script>
 </body>
 </html>

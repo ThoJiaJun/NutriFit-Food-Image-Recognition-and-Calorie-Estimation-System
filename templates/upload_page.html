@@ -8,41 +8,74 @@
     <style>
         body{
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #baf8da;
+            font-family: Arial;
+            background-color: #baf8da;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: flex-start;
             height: 100vh;
         }
 
         .navbar{
-            width: 100%;
-            background-color: #a3f6ce;
-            position: sticky;
-            top: 0;
+            position: relative;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 5px 40px;
-            box-sizing: border-box;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            width: 100%;
+            border-bottom: 1px solid #666;
+            background-color: #a3f6ce;
         }
 
         .navbar a{
             text-decoration: none;
-            color: inherit;
-        }
-        
-        .logo{
-            font-size: 30px;
-            font-weight: bold;
             cursor: pointer;
         }
 
         h1{
-            font-size: 48px;
+            margin: 10px;
             color: #333;
+            font-size: 30px;
+        }
+
+        .user_button{
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.5s;
+        }
+
+        .user_button:hover{
+            background: #e6f4ee;
+        }
+
+        .dropdown{
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            width: 150px;
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            overflow: hidden;
+            display: none;
+        }
+
+        .dropdown a{
+            display: block;
+            padding: 14px 18px;
+            text-decoration: none;
+            color: #333;
+            transition: 0.2s;
+        } 
+
+        .dropdown a:hover{
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .dropdown.show{
+            display: block;
         }
 
         form{
@@ -134,28 +167,35 @@
 </head>
 
 <body>
-    <div class = "navbar">
-        <a href = "/dashboard"><h1 title = "Back to Dashboard" class = "logo">🍏 NutriFit</h1></a>
-    </div>
-    
-    <h1>Upload Food Image</h1>
+    <div class="navbar">
+        <a href="/dashboard"><h1 title="Back to Dashboard">🍏 NutriFit</h1></a>
+        <h1>Upload Image</h1>
+        <div>
+            <h1 title="User Dropdown" class="user_button">👤 {{ user.name }}</h1>
 
-    <form action = "/upload" method = "post" enctype = "multipart/form-data">
+            <div class="dropdown">
+                <a href="/profile">Edit Profile</a>
+                <a href="/logout">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <form action="/upload" method="post" enctype="multipart/form-data">
         <div class = "container">
         
-            <label id = "upload" for = "img_file">
+            <label id="upload" for="img_file">
                 <p>Click To Upload Image</p>
             </label>
 
-            <input type = "file" id = "img_file" name ="file" accept = "image/*">
+            <input type="file" id="img_file" name="file" accept="image/*">
 
-            <img id = "preview" alt = "Image Preview">
+            <img id="preview" alt="Image Preview">
 
         </div>
     
-        <div class = "buttons">
-            <button type = "button" class = "retry" onclick = "reset_image()">Try Again</button>
-            <button type = "submit" class = "confirm" onclick = "return confirm_image()">Confirm Image</button>
+        <div class="buttons">
+            <button type="button" class="retry" onclick="reset_image()">Try Again</button>
+            <button type="submit" class="confirm" onclick="return confirm_image()">Confirm Image</button>
         </div>
     </form>
 
@@ -163,11 +203,26 @@
         const img_file = document.getElementById("img_file");
         const preview = document.getElementById("preview");
         const upload_label = document.getElementById("upload");
+        const user_button = document.querySelector(".user_button");
+        const dropdown = document.querySelector(".dropdown");
+
+        user_button.addEventListener("click", () => {
+            dropdown.classList.toggle("show");
+        });
+
+        document.addEventListener("click", (event) => {
+            if(
+                !user_button.contains(event.target) &&
+                !dropdown.contains(event.target)
+            ){
+                dropdown.classList.remove("show");
+            }
+        });
 
         img_file.addEventListener('change', function(){
             const file = this.files[0];
 
-            if (file) {
+            if(file){
                 const reader = new FileReader();
 
                 reader.addEventListener('load', function(){
@@ -188,11 +243,10 @@
         }
 
         function confirm_image(){
-            if (!img_file.files.length){
+            if(!img_file.files.length){
                 alert("Please upload an image first!");
                 return false;
             }
-
             return true;
         }
     </script>

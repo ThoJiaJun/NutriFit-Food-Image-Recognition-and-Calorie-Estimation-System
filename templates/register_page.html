@@ -3,40 +3,63 @@
 <head>
     <title>Register - NutriFit</title>
     <style>
-        body { 
-            font-family: Arial;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh;
+        body {
             margin: 0;
+            font-family: Arial;
+            background-color: #baf8da;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+        .bar {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            width: 100%;
+            border-bottom: 1px solid #666;
+            background-color: #a3f6ce;
+        }
+        h1 {
+            margin: 10px;
+            color: #333;
+            font-size: 30px;
         }
         .container {
             background: white;
-            padding: 40px;
+            padding: 10px 40px;
+            margin-bottom: 30px;
             border-radius: 20px;
-            width: 450px;
+            width: 500px;
         }
         h1 {
-            text-align: center;
-            color: #764ba2;
+            color: #333;
+            font-size: 30px;
         }
         h3 {
             text-align: center;
             color: #333;
+            margin-bottom: 8px;
+        }
+        .line {
+            width: 100%;
+            height: 1px;
+            background-color: #ccc;
+            margin-bottom: 30px;
         }
         label {
             display: block;
             margin-top: 10px;
-            margin-bottom: 5px;
             color: #333;
             font-weight: bold;
         }
         input, select {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
+            margin: 15px 0;
             border: 1px solid #ccc;
             border-radius: 10px;
             box-sizing: border-box;
@@ -44,11 +67,17 @@
         button {
             width: 100%;
             padding: 12px;
-            background: #764ba2;
+            margin-top: 30px;
+            background: #10b981;
             color: white;
+            font-size: 16px;
             border: none;
             border-radius: 10px;
             cursor: pointer;
+            transition: 0.5s;
+        }
+        button:hover {
+            background: #0d9b6b;
         }
         .flash {
             padding: 10px;
@@ -65,15 +94,23 @@
             color: #721c24;
         }
         a {
-            color: #764ba2;
+            color: #10b981;
             text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
+    <div class="bar">
+        <h1>🍏 NutriFit</h1>
+    </div>
+
     <div class="container">
-        <h1>NutriFit</h1>
         <h3>Register</h3>
+        <div class="line"></div>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
@@ -83,8 +120,8 @@
         {% endwith %}
 
         <form method="POST">
-            <label>Full Name</label>
-            <input type="text" name="name" placeholder="Full Name" required>
+            <label>Name</label>
+            <input type="text" name="name" placeholder="Name" required>
 
             <label>Email</label>
             <input type="email" name="email" placeholder="Email" required>

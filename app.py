@@ -158,7 +158,7 @@ def dashboard():
         return redirect(url_for('login'))
 
     user = User.query.get_or_404(session['user_id'])
-    return render_template('dashboard.html', user=user)
+    return render_template('dashboard.html', user = user)
 
 ################
 # Logout Logic #
@@ -191,7 +191,7 @@ def profile():
         flash('Profile updated successfully!', 'success')
         return redirect(url_for('profile'))
 
-    return render_template('profile.html', user=user)
+    return render_template('profile.html', user = user)
 
 #####################
 # Upload Page Logic #
@@ -264,7 +264,7 @@ def upload_img():
 
         return redirect(url_for('result'))
 
-    return render_template("upload_page.html", user=user)
+    return render_template("upload_page.html", user = user)
 
 #####################
 # Result Page Logic #
@@ -310,7 +310,9 @@ def history():
     if "user_id" not in session:
         return redirect(url_for("login"))
     
-    return render_template("history_page.html")
+    user = User.query.get(session['user_id'])
+
+    return render_template("history_page.html", user = user)
 
 @app.route("/save_meal", methods = ["POST"])
 def save_meal():
