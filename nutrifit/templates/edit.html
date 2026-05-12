@@ -1,180 +1,216 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
     <title>Edit Food</title>
 
     <style>
+
         body {
             font-family: Arial;
             text-align: center;
-            background: #f5f5f5;
-        }
-
-        img {
-            width: 350px;
-            margin-top: 15px;
-            border-radius: 10px;
         }
 
         .item {
             display: flex;
             justify-content: center;
+            align-items: center;
             gap: 10px;
-            margin: 10px auto;
-            background: white;
+
+            width: 80%;
+
+            margin: auto;
+
             padding: 10px;
-            width: 60%;
-            border-radius: 8px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+
+            border: 1px solid #ccc;
+
+            margin-bottom: 10px;
         }
 
         input {
-            padding: 6px;
+            padding: 5px;
+            width: 120px;
         }
 
         button {
-            padding: 8px 12px;
+            padding: 6px 10px;
             cursor: pointer;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
         }
 
-        .add {
-            background: #4caf50;
-            color: white;
+        img {
+            width: 400px;
+            margin-top: 20px;
         }
 
-        .continue {
-            background: #4facfe;
-            color: white;
-        }
-
-        .delete {
-            background: #f44336;
-            color: white;
-        }
-
-        .toggle {
-            background: #ff9800;
-            color: white;
-        }
-
-        .back {
-            background: #333;
-            color: white;
-        }
-
-        .toast {
-            display: none;
-            background: black;
-            color: white;
-            padding: 10px;
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 6px;
-        }
     </style>
+
 </head>
 
 <body>
 
-<h2>Edit Food Detection</h2>
+    <h2>Food Edit Page</h2>
 
-{% if image_file %}
-    <img src="{{ url_for('static', filename='uploads/' + image_file) }}">
-{% endif %}
+    {% if image_file %}
 
-<h3>Detected Items</h3>
+        <img src="{{ url_for('static', filename='uploads/' + image_file) }}">
 
-<div id="list">
+    {% endif %}
 
-    {% for item in detections %}
-    <div class="item">
-        <input type="text" class="food" value="{{ item.food }}">
-        <input type="number" class="weight" value="{{ item.weight }}">
-        <button class="delete" onclick="removeItem(this)">X</button>
+    <br><br>
+
+    <button onclick="toggleEdit()">
+        Enable / Disable Edit Mode
+    </button>
+
+    <button onclick="addFood()">
+        + Add Missing Food
+    </button>
+
+    <h3>Detected Items</h3>
+
+    <div id="list">
+
+        {% for item in detections %}
+
+        <div class="item">
+
+            <!-- FOOD -->
+            <input
+                type="text"
+                value="{{ item.food }}"
+                class="food"
+            >
+
+            <!-- QUANTITY -->
+            <input
+                type="number"
+                value="{{ item.quantity }}"
+                class="quantity"
+            >
+
+            <!-- WEIGHT -->
+            <input
+                type="number"
+                value="{{ item.weight }}"
+                class="grams"
+            >
+
+            <!-- DELETE -->
+            <button onclick="removeItem(this)">
+                Delete
+            </button>
+
+        </div>
+
+        {% endfor %}
+
     </div>
-    {% endfor %}
 
-</div>
+    <br>
 
-<br>
+    <button onclick="saveData()">
+        Save Changes
+    </button>
 
-<!-- BUTTONS -->
-<button class="add" onclick="addFood()">+ Add Food</button>
-<button class="toggle" onclick="toggleEdit()">Toggle Edit</button>
-<button class="continue" onclick="continueProcess()">Continue</button>
+    <br><br>
 
-<br><br>
+    <a href="/">
+        <button>
+            Back Home
+        </button>
+    </a>
 
-<a href="/">
-    <button class="back">⬅ Go Back</button>
-</a>
+    <script>
 
-<div class="toast" id="toast">Data Ready ✔</div>
+        let editMode = true;
 
-<script>
+        function toggleEdit() {
 
-let editMode = true;
+            editMode = !editMode;
 
-function removeItem(btn) {
-    btn.parentElement.remove();
-}
+            document
+                .querySelectorAll(".food, .quantity, .grams")
+                .forEach(input => {
 
-function addFood() {
-    let div = document.createElement("div");
-    div.className = "item";
+                    input.disabled = !editMode;
 
-    div.innerHTML = `
-        <input type="text" class="food" placeholder="Food">
-        <input type="number" class="weight" placeholder="Weight">
-        <button class="delete" onclick="removeItem(this)">X</button>
-    `;
+                });
 
-    document.getElementById("list").appendChild(div);
-}
+            alert(
+                editMode
+                ? "Edit Mode ON"
+                : "Edit Mode OFF"
+            );
+        }
 
-function toggleEdit() {
-    editMode = !editMode;
+        function removeItem(btn) {
 
-    document.querySelectorAll(".food, .weight").forEach(input => {
-        input.disabled = !editMode;
-    });
+            btn.parentElement.remove();
 
-    alert(editMode ? "Edit Mode ON" : "Edit Mode OFF");
-}
+        }
 
-function continueProcess() {
-    let data = [];
+        function addFood() {
 
-    document.querySelectorAll(".item").forEach(item => {
-        data.push({
-            food: item.querySelector(".food").value,
-            weight: item.querySelector(".weight").value
-        });
-    });
+            const list = document.getElementById("list");
 
-    console.log("Sending to Member 3:", data);
+            const div = document.createElement("div");
 
-    showToast();
+            div.className = "item";
 
-    // OPTIONAL FUTURE INTEGRATION:
-    // window.location.href = "/member3";
-}
+            div.innerHTML = `
+                <input type="text"
+                       placeholder="Food name"
+                       class="food">
 
-function showToast() {
-    let toast = document.getElementById("toast");
-    toast.style.display = "block";
+                <input type="number"
+                       placeholder="Quantity"
+                       class="quantity">
 
-    setTimeout(() => {
-        toast.style.display = "none";
-    }, 2000);
-}
+                <input type="number"
+                       placeholder="grams"
+                       class="grams">
 
-</script>
+                <button onclick="removeItem(this)">
+                    Delete
+                </button>
+            `;
+
+            list.appendChild(div);
+        }
+
+        function saveData() {
+
+            let items = [];
+
+            document
+                .querySelectorAll(".item")
+                .forEach(div => {
+
+                    let food =
+                        div.querySelector(".food").value;
+
+                    let quantity =
+                        div.querySelector(".quantity").value;
+
+                    let grams =
+                        div.querySelector(".grams").value;
+
+                    items.push({
+                        food,
+                        quantity,
+                        grams
+                    });
+                });
+
+            console.log("Saved Data:", items);
+
+            alert("Changes saved (demo mode)");
+        }
+
+    </script>
 
 </body>
+
 </html>
