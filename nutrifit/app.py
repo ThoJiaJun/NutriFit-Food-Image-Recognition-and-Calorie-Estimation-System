@@ -1,5 +1,7 @@
 import os
 import cv2
+import time
+
 from flask import Flask, render_template, request, redirect, url_for
 from ultralytics import YOLO
 
@@ -9,7 +11,9 @@ app = Flask(__name__)
 # PATH SETUP
 # -------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+
 MODEL_PATH = os.path.join(BASE_DIR, "model", "yolov8n.pt")
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -23,11 +27,19 @@ if not os.path.exists(MODEL_PATH):
 model = YOLO(MODEL_PATH)
 
 # -------------------------
-# FOOD CLASSES (filter)
+# FOOD CLASSES
 # -------------------------
 FOOD_CLASSES = {
-    "apple", "banana", "orange", "broccoli", "carrot",
-    "hot dog", "pizza", "donut", "cake", "sandwich"
+    "apple",
+    "banana",
+    "orange",
+    "broccoli",
+    "carrot",
+    "hot dog",
+    "pizza",
+    "donut",
+    "cake",
+    "sandwich"
 }
 
 # -------------------------
@@ -72,12 +84,20 @@ def upload():
     if file.filename == "":
         return "No file selected"
 
-    # Save image
-    image_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    # -------------------------
+    # UNIQUE FILE NAME
+    # -------------------------
+    filename = str(int(time.time())) + "_" + file.filename
+
+    image_path = os.path.join(UPLOAD_FOLDER, filename)
+
     file.save(image_path)
 
-    # Run YOLO detection
+    # -------------------------
+    # RUN YOLO
+    # -------------------------
     results = model(image_path)[0]
+
     img = cv2.imread(image_path)
 
     detections = []
@@ -87,56 +107,97 @@ def upload():
     # -------------------------
     for box in results.boxes:
 
+        confidence = float(box.conf[0])
+
+        # Ignore weak detections
+        if confidence < 0.20:
+            continue
+
         cls_id = int(box.cls[0])
+
         label = model.names[cls_id]
 
-        if label in FOOD_CLASSES:
+        # Ignore non-food objects
+        if label not in FOOD_CLASSES:
+            continue
 
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
+        x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-            # Draw box
-            cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        # -------------------------
+        # DRAW BOX
+        # -------------------------
+        cv2.rectangle(
+            img,
+            (x1, y1),
+            (x2, y2),
+            (0, 255, 0),
+            2
+        )
 
-            # Estimate weight (Member 2)
-            weight = FOOD_WEIGHT_MAP.get(label, 100)
+        # -------------------------
+        # ESTIMATE WEIGHT
+        # -------------------------
+        weight = FOOD_WEIGHT_MAP.get(label, 100)
 
-            # Label on image
-            text = f"{label} {weight}g"
-            cv2.putText(img, text,
-                        (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.6,
-                        (0, 255, 0),
-                        2)
+        # -------------------------
+        # LABEL TEXT
+        # -------------------------
+        text = f"{label} {weight}g"
 
-            detections.append({
-                "food": label,
-                "weight": weight
-            })
+        cv2.putText(
+            img,
+            text,
+            (x1, y1 - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (0, 255, 0),
+            2
+        )
+
+        detections.append({
+            "food": label,
+            "weight": weight
+        })
 
     # -------------------------
     # SAVE OUTPUT IMAGE
     # -------------------------
-    output_filename = "boxed_" + file.filename
-    output_path = os.path.join(UPLOAD_FOLDER, output_filename)
+    output_filename = "boxed_" + filename
+
+    output_path = os.path.join(
+        UPLOAD_FOLDER,
+        output_filename
+    )
 
     cv2.imwrite(output_path, img)
 
     latest_image = output_filename
 
     # -------------------------
-    # REMOVE DUPLICATES
+    # GROUP SAME FOOD + COUNT
     # -------------------------
-    unique = {}
+    grouped = {}
 
     for item in detections:
+
         label = item["food"]
 
-        if label not in unique:
-            unique[label] = item
+        if label not in grouped:
 
-    latest_detections = list(unique.values())
+            grouped[label] = {
+                "food": label,
+                "weight": item["weight"],
+                "quantity": 1
+            }
 
+        else:
+            grouped[label]["quantity"] += 1
+
+    latest_detections = list(grouped.values())
+
+    # -------------------------
+    # SHOW RESULT PAGE
+    # -------------------------
     return render_template(
         "result.html",
         image_file=latest_image,
@@ -144,10 +205,11 @@ def upload():
     )
 
 # -------------------------
-# CONTINUE PAGE (EDIT)
+# CONTINUE PAGE
 # -------------------------
 @app.route('/continue')
 def continue_page():
+
     return render_template(
         "edit.html",
         image_file=latest_image,
@@ -159,10 +221,16 @@ def continue_page():
 # -------------------------
 @app.route('/try_again')
 def try_again():
+
     return redirect(url_for('home'))
 
 # -------------------------
 # RUN APP
 # -------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+
+    app.run(
+        host="0.0.0.0",
+        port=10000,
+        debug=True
+    )
