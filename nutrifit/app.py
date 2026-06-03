@@ -14,7 +14,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
 
-MODEL_PATH = os.path.join(BASE_DIR, "model", "yolov8n.pt")
+MODEL_PATH = os.path.join(BASE_DIR, "model", "yolo11s_best.pt")
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -26,36 +26,57 @@ if not os.path.exists(MODEL_PATH):
 
 model = YOLO(MODEL_PATH)
 
-# -------------------------
-# FOOD CLASSES
-# -------------------------
-FOOD_CLASSES = {
-    "apple",
-    "banana",
-    "orange",
-    "broccoli",
-    "carrot",
-    "hot dog",
-    "pizza",
-    "donut",
-    "cake",
-    "sandwich"
-}
 
 # -------------------------
-# SIMPLE WEIGHT MAP
+# FOOD WEIGHT MAP
 # -------------------------
 FOOD_WEIGHT_MAP = {
-    "pizza": 250,
+    "ais kacang": 300,
+    "apam balik": 150,
     "apple": 180,
+    "apple pie": 125,
+    "asam laksa": 450,
+    "avocado": 200,
+    "bacon": 30,
+    "baked bean": 130,
     "banana": 120,
-    "donut": 90,
-    "cake": 200,
-    "sandwich": 150,
-    "orange": 130,
-    "broccoli": 100,
-    "carrot": 80,
-    "hot dog": 160
+    "biscuit": 15,
+    "blueberry": 5,
+    "boiled egg": 50,
+    "bread": 30,
+    "brownie": 60,
+    "burger": 250,
+    "cake": 100,
+    "carbonara": 350,
+    "cauliflower": 150,
+    "cherry": 8,
+    "chicken nugget": 20,
+    "chicken rice": 400,
+    "chip": 3,
+    "chocolate": 25,
+    "churros": 40,
+    "corn": 100,
+    "cream": 30,
+    "crossaint": 70,
+    "cucumber": 200,
+    "cupcake": 80,
+    "curry": 250,
+    "curry puff": 70,
+    "donut": 70,
+    "french fries": 120,
+    "fried rice": 350,
+    "green apple": 180,
+    "hot dog": 180,
+    "ice cream": 100,
+    "omelette": 120,
+    "onion": 110,
+    "orange": 180,
+    "raspberry": 4,
+    "roasted chicken": 250,
+    "sausages": 75,
+    "strawberry": 15,
+    "waffle": 100,
+    "watermelon": 300
 }
 
 # -------------------------
@@ -110,16 +131,13 @@ def upload():
         confidence = float(box.conf[0])
 
         # Ignore weak detections
-        if confidence < 0.20:
+        if confidence < 0.25:
             continue
 
         cls_id = int(box.cls[0])
 
         label = model.names[cls_id]
 
-        # Ignore non-food objects
-        if label not in FOOD_CLASSES:
-            continue
 
         x1, y1, x2, y2 = map(int, box.xyxy[0])
 
