@@ -63,6 +63,8 @@ FOOD_WEIGHT_MAP = {
     "curry": 250,
     "curry puff": 70,
     "donut": 70,
+    "boiled egg": 50,
+    "fried egg": 55,
     "french fries": 120,
     "fried rice": 350,
     "green apple": 180,
@@ -74,6 +76,7 @@ FOOD_WEIGHT_MAP = {
     "raspberry": 4,
     "roasted chicken": 250,
     "sausages": 75,
+    "scrambled egg": 100,
     "strawberry": 15,
     "waffle": 100,
     "watermelon": 300
