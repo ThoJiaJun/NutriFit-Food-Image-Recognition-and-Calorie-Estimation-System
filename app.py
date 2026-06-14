@@ -299,6 +299,36 @@ def upload_img():
 ###################
 # Edit Page Logic #
 ###################
+def get_food_options(food_name):
+    connection = sqlite3.connect("database/food.db")
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT name
+        FROM foods
+        WHERE LOWER(name) LIKE ?
+        ORDER BY name
+        LIMIT 10
+    """, (f"%{food_name.lower()}%",))
+
+    foods = cursor.fetchall()
+
+    connection.close()
+
+    return foods
+
+@app.route("/food_options")
+def food_options():
+    keyword = request.args.get("q", "").strip()
+
+    if not keyword:
+        return jsonify([])
+
+    foods = get_food_options(keyword)
+
+    return jsonify([food["name"] for food in foods])
+
 @app.route("/edit")
 def edit_page():
 

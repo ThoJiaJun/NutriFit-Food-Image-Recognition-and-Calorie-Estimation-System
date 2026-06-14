@@ -146,6 +146,18 @@
             color: #666;
         }
 
+        .food_wrapper{
+            position: relative;
+            width: 100%;
+        }
+
+        .food_options{
+            margin-top: 5px;
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
         input{
             padding: 8px 12px;
             width: 100%;
@@ -276,7 +288,7 @@
 
     <div class="container">
         <h2>Detected Foods</h2>
-        <button class="edit_button" onclick="toggleEdit()">Edit Mode <strong>OFF</strong></button>
+        <button class="edit_button active" onclick="toggleEdit()">Edit Mode <strong>ON</strong></button>
 
         <hr class="header_line">
 
@@ -295,12 +307,16 @@
                 <div class="item">
                     <div class="row_num"></div>
 
-                    <input type="text" placeholder="Food name" value="{{ item.food }}" class="food" disabled required>
+                    <div class="food_wrapper">
+                        <input type="text" placeholder="Food name" value="{{ item.food }}" class="food" oninput="showSuggestions(this)" required>
 
-                    <input type="number" placeholder="Quantity" value="{{ item.quantity }}" class="quantity" min="1" disabled required>
+                        <select class="food_options" onchange="selectFood(this)" style="display:none;"></select>
+                    </div>
+
+                    <input type="number" placeholder="Quantity" value="{{ item.quantity }}" class="quantity" min="1" required>
 
                     <div class="center">
-                        <button title="Delete Food" class="delete_food" onclick="removeItem(this)" disabled>🗑️</button>
+                        <button title="Delete Food" class="delete_food" onclick="removeItem(this)">🗑️</button>
                     </div>
                 </div>
 
@@ -311,9 +327,13 @@
                 <div class="item">
                     <div class="row_num"></div>
 
-                    <input type="text" placeholder="Food name" class="food" required disabled>
+                    <div class="food_wrapper">
+                        <input type="text" placeholder="Food name" class="food" oninput="showSuggestions(this)" required>
 
-                    <input type="number" placeholder="Quantity" class="quantity" min="1" required disabled>
+                        <select class="food_options" onchange="selectFood(this)" style="display:none;"></select>
+                    </div>
+
+                    <input type="number" placeholder="Quantity" class="quantity" min="1" required>
 
                     <div class="center">
                         <button title="Delete Food" class="delete_food" onclick="removeItem(this)">🗑️</button>
@@ -324,7 +344,7 @@
         </div>
 
         <div class="add_row">
-            <button class="add_food" onclick="addFood()" disabled>+ Add Missing Food</button>
+            <button class="add_food" onclick="addFood()">+ Add Missing Food</button>
         </div>
 
     </div>
@@ -337,12 +357,16 @@
     </div>
 
     <script>
-        let editMode = false;
+        let editMode = true;
         const user_button = document.querySelector(".user_button");
         const dropdown = document.querySelector(".dropdown");
 
         window.addEventListener("DOMContentLoaded", () => {
             updateRowNumbers();
+
+            document.querySelectorAll(".food").forEach(input => {
+                showSuggestions(input);
+            });
 
             const food_input = document.querySelector(".food");
             if (food_input && food_input.value === "") {
@@ -409,8 +433,15 @@
 
             div.innerHTML = `
                 <div class="row_num"></div>
-                <input type="text" placeholder="Food name" class="food" required>
+
+                <div class="food_wrapper">
+                    <input type="text" placeholder="Food name" class="food" oninput="showSuggestions(this)" required>
+                    
+                    <select class="food_options" onchange="selectFood(this)" style="display:none;"></select>
+                </div>
+
                 <input type="number" placeholder="Quantity" class="quantity" min="1" required>
+
                 <div class="center">
                     <button title="Delete Food" class="delete_food" onclick="removeItem(this)">🗑️</button>
                 </div>
@@ -418,6 +449,42 @@
 
             list.appendChild(div);
             updateRowNumbers();
+        }
+
+        async function showSuggestions(input){
+            const keyword = input.value.trim();
+            const wrapper = input.closest(".food_wrapper");
+            const dropdown = wrapper.querySelector(".food_options");
+
+            if(keyword.length < 2){
+                dropdown.style.display = "none";
+                return;
+            }
+
+            const response = await fetch(`/food_options?q=${encodeURIComponent(keyword)}`);
+            const foods = await response.json();
+
+            if(foods.length === 0){
+                dropdown.style.display = "none";
+                return;
+            }
+
+            dropdown.innerHTML = `<option value="">Select food...</option>`;
+
+            foods.forEach(food => {
+                dropdown.innerHTML += `<option value="${food}">${food}</option>`;
+            });
+
+            dropdown.style.display = "block";
+        }
+
+        function selectFood(dropdown){
+            const wrapper = dropdown.closest(".food_wrapper");
+            const input = wrapper.querySelector(".food");
+            
+            input.value = dropdown.value;
+
+            dropdown.style.display = "none";
         }
 
         function update_detections() {
