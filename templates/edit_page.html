@@ -288,21 +288,39 @@
         </div>
 
         <div id="list">
-            {% for item in detections %}
+            {% if detections %}
 
-            <div class="item">
-                <div class="row_num"></div>
+                {% for item in detections %}
 
-                <input type="text" value="{{ item.food }}" class="food" disabled>
+                <div class="item">
+                    <div class="row_num"></div>
 
-                <input type="number" value="{{ item.quantity }}" class="quantity" disabled>
+                    <input type="text" placeholder="Food name" value="{{ item.food }}" class="food" disabled required>
 
-                <div class="center">
-                    <button title="Delete Food" class="delete_food" onclick="removeItem(this)" disabled>🗑️</button>
+                    <input type="number" placeholder="Quantity" value="{{ item.quantity }}" class="quantity" min="1" disabled required>
+
+                    <div class="center">
+                        <button title="Delete Food" class="delete_food" onclick="removeItem(this)" disabled>🗑️</button>
+                    </div>
                 </div>
-            </div>
 
-            {% endfor %}
+                {% endfor %}
+
+            {% else %}
+
+                <div class="item">
+                    <div class="row_num"></div>
+
+                    <input type="text" placeholder="Food name" class="food" required disabled>
+
+                    <input type="number" placeholder="Quantity" class="quantity" min="1" required disabled>
+
+                    <div class="center">
+                        <button title="Delete Food" class="delete_food" onclick="removeItem(this)">🗑️</button>
+                    </div>
+                </div>
+            {% endif %}
+
         </div>
 
         <div class="add_row">
@@ -315,7 +333,7 @@
 
     <div class="buttons">
         <button class="back" onclick="window.location.href='/upload'">Back</button>
-        <button class="continue" onclick="update_detections()">Continue</button>
+        <button type="submit" class="continue" onclick="update_detections()">Continue</button>
     </div>
 
     <script>
@@ -325,6 +343,11 @@
 
         window.addEventListener("DOMContentLoaded", () => {
             updateRowNumbers();
+
+            const food_input = document.querySelector(".food");
+            if (food_input && food_input.value === "") {
+                alert("Sorry! No food detected! Please enter the missing food manually😊");
+            }
         });
 
         user_button.addEventListener("click", () => {
@@ -386,8 +409,8 @@
 
             div.innerHTML = `
                 <div class="row_num"></div>
-                <input type="text" placeholder="Food name" class="food">
-                <input type="number" placeholder="Quantity" class="quantity">
+                <input type="text" placeholder="Food name" class="food" required>
+                <input type="number" placeholder="Quantity" class="quantity" min="1" required>
                 <div class="center">
                     <button title="Delete Food" class="delete_food" onclick="removeItem(this)">🗑️</button>
                 </div>
@@ -400,23 +423,41 @@
         function update_detections() {
             const foods = [];
 
-            document.querySelectorAll(".item").forEach(row => {
+            for (const row of document.querySelectorAll(".item")) {
+                const food_input = row.querySelector(".food");
+                const quantity_input = row.querySelector(".quantity");
+
+                const food = food_input.value.trim();
+                const quantity = quantity_input.value;
+
+                if (food === "") {
+                    alert("Please enter the missing food name!");
+                    food_input.focus();
+                    return;
+                }
+
+                if (quantity === "" || Number(quantity) < 1) {
+                    alert("Please enter a quantity greater than 0!");
+                    quantity_input.focus();
+                    return;
+                }
+
                 foods.push({
-                    food: row.querySelector(".food").value,
-                    quantity: parseInt(row.querySelector(".quantity").value)
+                    food: food,
+                    quantity: parseInt(quantity)
                 });
-            });
+            }
 
             fetch("/update_detections", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(foods)
             })
-            
+
             .then(() => {
                 window.location.href = "/result";
             });
-        }
+}
     </script>
 
 </body>

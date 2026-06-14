@@ -256,9 +256,11 @@ def upload_img():
 
         # If nothing detected
         if not detections:
-            return "No food detected"
+            session["detections"] = []
+            session["boxed_image"] = filename
+            return redirect(url_for("edit_page"))
         
-        # SAVE OUTPUT IMAGE
+        # SAVE OUTPUT IMAGE ONLY IF THERE ARE DETECTIONS
         output_filename = "boxed_" + filename
 
         output_path = os.path.join(
