@@ -144,6 +144,20 @@
             cursor: pointer;
         }
 
+        .delete_meal{
+            background: none;
+            border: none;
+            font-size: 18px;
+            padding: 5px;
+            transition: transform 0.2s;
+            width: auto;
+            cursor: pointer;
+        }
+
+        .delete_meal:hover{
+            transform: scale(1.2);
+        }
+
         #popup{
             position: fixed;
             top: 30%;
@@ -338,17 +352,17 @@
                 meal_list.innerHTML += `
                     <div style = "margin-bottom: 20px;">
                         <div style = "display: flex; justify-content: space-between; align-items: flex-start;">
-                            <span>${index + 1}. ${meal.food_name}</span>
+                            <span>${index + 1}. ${meal.food_name} × <strong>${meal.servings}</strong></span>
                             <span>${meal.calories} kcal</span>
                         </div>
 
                         <div style = "margin-left: 20px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center;">
                             <div style = "display: flex; gap: 30px;">
-                                <span>Carbs: ${meal.carbs} g</span>
-                                <span>Protein: ${meal.protein} g</span>
-                                <span>Fats: ${meal.fats} g</span>
+                                <span>Carbs: ${meal.carbs.toFixed(2)} g</span>
+                                <span>Protein: ${meal.protein.toFixed(2)} g</span>
+                                <span>Fats: ${meal.fats.toFixed(2)} g</span>
                             </div>
-                            <span title = "Delete Meal" style = "margin-top: 5px; cursor: pointer; font-size: 18px;" onclick = "show_popup(${meal.id})">🗑️</span>
+                            <span title = "Delete Meal" class = "delete_meal" onclick = "show_popup(${meal.id})">🗑️</span>
                         </div>
 
                         <div style = "margin-top: 10px; border-bottom: 2px dashed #ccc;"></div>
@@ -357,9 +371,9 @@
 
             total_calories.innerText = `Total Calories: ${total_kcal} kcal`;
             total_nutrition.innerHTML = `
-                <span>Total Carbs: ${total_carbs} g</span>
-                <span>Total Protein: ${total_protein} g</span>
-                <span>Total Fats: ${total_fats} g</span>`;
+                <span>Total Carbs: ${total_carbs.toFixed(2)} g</span>
+                <span>Total Protein: ${total_protein.toFixed(2)} g</span>
+                <span>Total Fats: ${total_fats.toFixed(2)} g</span>`;
         }
 
         function render_weekly(data){
@@ -383,7 +397,7 @@
                 data.days[date].meals.forEach((meal, index) => {
                     meal_list.innerHTML += `
                         <div style = "display: flex; justify-content: space-between;">
-                            <span>${index+1}. ${meal.food_name}</span>
+                            <span>${index + 1}. ${meal.food_name} × <strong>${meal.servings}</strong></span>
                             <span>${meal.calories} kcal</span>
                         </div>
                     `;
@@ -394,9 +408,9 @@
             }
 
             total_nutrition.innerHTML = `
-                <span>Total Carbs: ${data.total_carbs} g</span>
-                <span>Total Protein: ${data.total_protein} g</span>
-                <span>Total Fats: ${data.total_fats} g</span>
+                <span>Total Carbs: ${data.total_carbs.toFixed(2)} g</span>
+                <span>Total Protein: ${data.total_protein.toFixed(2)} g</span>
+                <span>Total Fats: ${data.total_fats.toFixed(2)} g</span>
             `;
         }
 
@@ -427,9 +441,9 @@
             }
 
             total_nutrition.innerHTML = `
-                <span>Total Carbs: ${data.total_carbs} g</span>
-                <span>Total Protein: ${data.total_protein} g</span>
-                <span>Total Fats: ${data.total_fats} g</span>
+                <span>Total Carbs: ${data.total_carbs.toFixed(2)} g</span>
+                <span>Total Protein: ${data.total_protein.toFixed(2)} g</span>
+                <span>Total Fats: ${data.total_fats.toFixed(2)} g</span>
             `;
         }
 

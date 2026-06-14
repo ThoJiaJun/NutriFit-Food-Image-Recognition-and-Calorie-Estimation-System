@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session, url_for, f
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from datetime import datetime, timezone
+import time
 import calendar
 import sqlite3
 import os
@@ -46,7 +47,7 @@ with app.app_context():
 # PATH SETUP #
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
-MODEL_PATH = os.path.join(BASE_DIR, "model", "yolov8n.pt")
+MODEL_PATH = os.path.join(BASE_DIR, "model", "yolo11s_best.pt")
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -55,12 +56,6 @@ if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError("Model not found in /model folder!")
 
 model = YOLO(MODEL_PATH)
-
-# FOOD FILTER LIST #
-FOOD_CLASSES = {
-    "apple", "banana", "orange", "broccoli", "carrot",
-    "hot dog", "pizza", "donut", "cake", "sandwich"
-}
 
 # TEMP STORAGE #
 latest_image = None
@@ -198,73 +193,129 @@ def profile():
 #####################
 @app.route("/upload", methods=['GET', 'POST'])
 def upload_img():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+    if "user_id" not in session:
+        return redirect(url_for("login"))
 
+    user = User.query.get(session["user_id"])
 
-    user = User.query.get(session['user_id'])
-
-    if request.method == 'POST':
-        file = request.files['file']
+    if request.method == "POST":
+        file = request.files["file"]
 
         if file.filename == "":
             return "No file selected"
 
         # Save image
-        image_path = os.path.join(UPLOAD_FOLDER, file.filename)
+        filename = str(int(time.time())) + "_" + file.filename
+        image_path = os.path.join(UPLOAD_FOLDER, filename)
         file.save(image_path)
 
         # Run YOLO
         results = model(image_path)[0]
-
+        img = cv2.imread(image_path)
         detections = []
 
-        SCALE_FACTOR = 0.01
-
+        # DETECTION LOOP
         for box in results.boxes:
+            confidence = float(box.conf[0])
+
+            # Ignore weak detections
+            if confidence < 0.25:
+                continue
+
             cls_id = int(box.cls[0])
+
             label = model.names[cls_id]
 
-            if label in FOOD_CLASSES:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
-                area = (x2 - x1) * (y2 - y1)
-                weight = int(area * SCALE_FACTOR)
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-                detections.append({
-                    "food": label,
-                    "weight": weight
-                })
+            # DRAW BOX
+            cv2.rectangle(
+                img,
+                (x1, y1),
+                (x2, y2),
+                (0, 255, 0),
+                2
+            )
+
+            # LABEL TEXT
+            text = f"{label}"
+
+            cv2.putText(
+                img,
+                text,
+                (x1, y1 - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0, 255, 0),
+                2
+            )
+
+            detections.append({
+                "food": label
+            })
 
         # If nothing detected
         if not detections:
             return "No food detected"
+        
+        # SAVE OUTPUT IMAGE
+        output_filename = "boxed_" + filename
 
-        # Take first detected food
-        detected_food = detections[0]["food"]
+        output_path = os.path.join(
+            UPLOAD_FOLDER,
+            output_filename
+        )
 
-        # Map to your database naming
-        food_name_map = {
-            "apple": "Apple (Red) (1 unit)",
-            "banana": "Banana (1 unit)",
-            "orange": "Orange (1 unit)",
-            "broccoli": "Broccoli (1 floweret)",
-            "carrot": "Carrot (1 slice)",
-            "hot dog": "Hotdog (1 unit)",
-            "pizza": "Pizza (1 piece)",
-            "donut": "Donut (sugar) (1 piece)",
-            "sandwich": "Sandwich (egg mayo) (1 piece)"
-        }
+        cv2.imwrite(output_path, img)
+            
+        # GROUP SAME FOOD + COUNT
+        grouped = {}
 
-        db_name = food_name_map.get(detected_food)
+        for item in detections:
 
-        if not db_name:
-            return "Food not mapped in database"
+            label = item["food"]
 
-        session['food_name'] = db_name
+            if label not in grouped:
 
-        return redirect(url_for('result'))
+                grouped[label] = {
+                    "food": label,
+                    "quantity": 1
+                }
+            else:
+                grouped[label]["quantity"] += 1
 
+        latest_detections = list(grouped.values())
+
+        session["food_name"] = detections[0]["food"]
+        session["detections"] = latest_detections
+        session["boxed_image"] = output_filename
+
+        return redirect(url_for("edit_page"))
+    
     return render_template("upload_page.html", user = user)
+
+###################
+# Edit Page Logic #
+###################
+@app.route("/edit")
+def edit_page():
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user = User.query.get(session['user_id'])
+
+    detections = session.get("detections", [])
+
+    image_file = session.get("boxed_image")
+
+    return render_template("edit_page.html", user = user, detections = detections, image_file = image_file)
+
+@app.route("/update_detections", methods=["POST"])
+def update_detections():
+    session["detections"] = request.get_json()
+
+    return jsonify({"success": True})
 
 #####################
 # Result Page Logic #
@@ -277,10 +328,12 @@ def get_food_info(food_name):
     cursor.execute("""
         SELECT name, calories, carbs, protein, fats
         FROM foods
-        WHERE name = ?
-    """, (food_name,))
+        WHERE LOWER(name) LIKE ?
+        LIMIT 1
+    """, (f"%{food_name.lower()}%",))
 
     food = cursor.fetchone()
+
     connection.close()
 
     return food
@@ -295,12 +348,25 @@ def result():
     if 'food_name' not in session:
         return redirect(url_for('upload_img'))
 
-    food = get_food_info(session['food_name'])
+    foods = []
 
-    if not food:
-        return "Food not found in database"
+    for item in session["detections"]:
 
-    return render_template("result_page.html", food = food, user = user)
+        food_info = get_food_info(item["food"])
+
+        if food_info:
+            quantity = item["quantity"]
+
+            foods.append({
+                "name": food_info["name"],
+                "quantity": quantity,
+                "calories": food_info["calories"] * quantity,
+                "carbs": food_info["carbs"] * quantity,
+                "protein": food_info["protein"] * quantity,
+                "fats": food_info["fats"] * quantity
+            })
+
+    return render_template("result_page.html", foods = foods, user = user)
 
 ######################
 # History Page Logic #
@@ -319,16 +385,17 @@ def save_meal():
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
     
-    data = request.get_json()
+    meal_items = request.get_json()
     today = datetime.now().strftime("%Y-%m-%d")
     
     connection = sqlite3.connect("database/meal_history.db")
     cursor = connection.cursor()
 
-    cursor.execute("""
-        INSERT INTO meal_history(user_id, food_name, calories, carbs, protein, fats, servings, date)
-        VALUES(?, ?, ?, ?, ?, ?, ?, ?)""", 
-        (session["user_id"], data["food_name"], data["calories"], data["carbs"], data["protein"], data["fats"], data["servings"], today))
+    for data in meal_items:
+        cursor.execute("""
+            INSERT INTO meal_history(user_id, food_name, calories, carbs, protein, fats, servings, date)
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?)""", 
+            (session["user_id"], data["food_name"], data["calories"], data["carbs"], data["protein"], data["fats"], data["servings"], today))
 
     connection.commit()
 
@@ -404,7 +471,8 @@ def get_meals():
 
             grouped[d]["meals"].append({
                 "food_name": r["food_name"],
-                "calories": r["calories"]
+                "calories": r["calories"],
+                "servings": r["servings"]
             })
 
             grouped[d]["total"] += r["calories"]
@@ -419,9 +487,9 @@ def get_meals():
             "year": year,
             "week": week,
             "total_kcal": total_week_kcal,
-            "total_carbs": round(total_carbs, 2),
-            "total_protein": round(total_protein, 2),
-            "total_fats": round(total_fats, 2),
+            "total_carbs": total_carbs,
+            "total_protein": total_protein,
+            "total_fats": total_fats,
             "days": grouped
         })
     elif history_tab == "monthly":
@@ -480,12 +548,12 @@ def get_meals():
         connection.close()
         return jsonify({
             "total_kcal": total_month_kcal,
-            "total_carbs": round(total_carbs, 2),
-            "total_protein": round(total_protein, 2),
-            "total_fats": round(total_fats, 2),
+            "total_carbs": total_carbs,
+            "total_protein": total_protein,
+            "total_fats": total_fats,
             "weeks": weekly
         })
-    
+
     connection.close()
     return jsonify([])
 

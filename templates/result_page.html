@@ -88,7 +88,7 @@
             text-align: center;
         }
 
-        .food_name{
+        .food{
             font-size: 28px;
             font-weight: bold;
             margin-bottom: 50px;
@@ -166,77 +166,89 @@
         </div>
     </div>
 
+    {% for food in foods %}
     <div class="container">
-        <div class="food_name" id="food_name">{{food["name"]}}</div>
+        <div class="food">
+            <span class="food_name">{{food["name"]}}</span>
+             × 
+             <span class="quantity">{{food["quantity"]}}</span>
+        </div>
 
         <div class="grid">
             <div class="item">
                 <span class="nutrition">Calories</span>
-                <span class="value" id="calories">{{food["calories"]}}</span>
+                <span class="value calories">{{food["calories"]}}</span>
             </div>
 
             <div class="item">
                 <span class="nutrition">Carbs</span>
-                <span class="value" id="carbs">{{food["carbs"]}}</span>
+                <span class="value carbs">{{food["carbs"]}}</span>
             </div>
 
             <div class="item">
                 <span class="nutrition">Proteins</span>
-                <span class="value" id="protein">{{food["protein"]}}</span>
+                <span class="value protein">{{food["protein"]}}</span>
             </div>
 
             <div class="item">
                 <span class="nutrition">Fats</span>
-                <span class="value" id="fats">{{food["fats"]}}</span>
+                <span class="value fats">{{food["fats"]}}</span>
             </div>
         </div>
     </div>
+    {% endfor %}
 
     <div class="buttons">
-        <button class="retry" onclick="window.location.href='/upload'">Try Again</button>
+        <button class="retry" onclick="window.location.href='/edit'">Back To Edit</button>
         <button class="confirm" onclick="confirm_meal()">Confirm Meal</button>
     </div>
 
-    <script>
-        const user_button = document.querySelector(".user_button");
-        const dropdown = document.querySelector(".dropdown");
+<script>
+    const user_button = document.querySelector(".user_button");
+    const dropdown = document.querySelector(".dropdown");
 
-        user_button.addEventListener("click", () => {
-            dropdown.classList.toggle("show");
-        });
+    user_button.addEventListener("click", () => {
+        dropdown.classList.toggle("show");
+    });
 
-        document.addEventListener("click", (event) => {
-            if(
-                !user_button.contains(event.target) &&
-                !dropdown.contains(event.target)
-            ){
-                dropdown.classList.remove("show");
-            }
-
-        });
-
-        function confirm_meal(){
-            let meal_data = {
-                food_name: document.getElementById("food_name").innerText,
-                calories: parseFloat(document.getElementById("calories").innerText),
-                carbs: parseFloat(document.getElementById("carbs").innerText),
-                protein: parseFloat(document.getElementById("protein").innerText),
-                fats: parseFloat(document.getElementById("fats").innerText),
-                servings: 1
-            };
-
-            fetch("/save_meal", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(meal_data)
-            })
-
-            .then(res => res.json())
-            .then(() => {
-                alert("Meal saved!");
-                window.location.href = "/history";
-            });
+    document.addEventListener("click", (event) => {
+        if(
+            !user_button.contains(event.target) &&
+            !dropdown.contains(event.target)
+        ){
+            dropdown.classList.remove("show");
         }
+
+    });
+
+    function confirm_meal(){
+        let meal_items = []
+        const containers = document.querySelectorAll(".container");
+        
+        containers.forEach(container => {
+            let meal_data = {
+                food_name: container.querySelector(".food_name").innerText,
+                servings: parseInt(container.querySelector(".quantity").innerText),
+                calories: parseFloat(container.querySelector(".calories").innerText),
+                carbs: parseFloat(container.querySelector(".carbs").innerText),
+                protein: parseFloat(container.querySelector(".protein").innerText),
+                fats: parseFloat(container.querySelector(".fats").innerText),
+            };
+            meal_items.push(meal_data);
+        });
+
+        fetch("/save_meal", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(meal_items)
+        })
+
+        .then(res => res.json())
+        .then(() => {
+            alert("Meal saved!");
+            window.location.href = "/history";
+        });
+    }
     </script>
 </body>
 </html>

@@ -2,36 +2,252 @@
 <html>
 <head>
     <title>Edit Food</title>
-
+    
     <style>
-        body { font-family: Arial; text-align: center; }
-
-        .item {
+        body{
+            margin: 0;
+            font-family: Arial;
+            background-color: #baf8da;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
-            width: 60%;
-            margin: auto;
-            padding: 10px;
-            border: 1px solid #ccc;
-            margin-bottom: 10px;
+            justify-content: flex-start;
+            min-height: 100vh;
         }
 
-        input {
-            padding: 5px;
-            width: 150px;
+        .navbar{
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            width: 100%;
+            border-bottom: 1px solid #666;
+            background-color: #a3f6ce;
         }
 
-        button {
-            padding: 5px;
+        .navbar a{
+            text-decoration: none;
             cursor: pointer;
         }
 
-        .hidden {
+        h1{
+            margin: 10px;
+            color: #333;
+            font-size: 30px;
+        }
+
+        .user_button{
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.5s;
+        }
+
+        .user_button:hover{
+            background: #e6f4ee;
+        }
+
+        .dropdown{
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            width: 150px;
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            overflow: hidden;
             display: none;
         }
 
-        img {
+        .dropdown a{
+            display: block;
+            padding: 14px 18px;
+            text-decoration: none;
+            color: #333;
+            transition: 0.2s;
+        } 
+
+        .dropdown a:hover{
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .dropdown.show{
+            display: block;
+        }
+        
+        .container{
+            background: #ffffff;
+            width: 85%;
+            max-width: 750px;
+            border-radius: 40px;
+            padding: 40px;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        h2{
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .header_line{
+            border: 0;
+            height: 2px;
+            background: #666;
+            margin-bottom: 20px;
+        }
+
+        .edit_button{
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            font-size: 12px;
+            color:#666;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background-color: #fcfcfc;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .edit_button.active{
+            background-color: #4caf50;
+            color: #ffffff;
+            border-color: #4caf50;
+        }
+
+        .table_headers,
+        .item{
+            display: grid;
+            grid-template-columns: 50px 1fr 120px 60px;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 5px;
+        }
+
+        .table_headers{
+            font-weight: bold;
+            color: #666;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .table_headers .center,
+        .item .center{
+            text-align: center;
+        }
+
+        .row_num{
+            color: #666;
+        }
+
+        input{
+            padding: 8px 12px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus{
+            outline: none;
+            border-color: #10b981;
+        }
+
+        .delete_food{
+            background: none;
+            border: none;
+            font-size: 18px;
+            padding: 5px;
+            transition: transform 0.2s;
+            width: auto;
+            cursor: pointer;
+        }
+
+        .delete_food:hover:not(:disabled){
+            transform: scale(1.2);
+        }
+
+        .add_row{
+            margin-top: 15px;
+            text-align: left;
+            padding: 0 5px;
+        }
+
+        .add_food{
+            background: none;
+            border: 2px dashed #cbd5e1;
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .add_food:hover:not(:disabled){
+            background-color: #f8fafc;
+            border-color: #94a3b8;
+            color: #334155;
+        }
+
+        .food:disabled,
+        .quantity:disabled,
+        .delete_food:disabled, 
+        .add_food:disabled{
+            background-color: #f5f5f5;
+            color: #333;
+            cursor: not-allowed;
+            border-color: #e8e8e8;
+            opacity: 0.6;
+        }
+
+        button{
+            flex: 1;
+            padding: 20px;
+            color: #ffffff;
+            font-size: 22px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: 0.5s;
+        }
+
+        .buttons{
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            width: 85%;
+            max-width: 800px;
+        }
+
+        .back{
+            background-color: #f76565;
+        }
+
+        .back:hover{
+            background-color: #f55050;
+        }
+
+        .continue{
+            background-color: #10b981;
+        }
+
+        .continue:hover{
+            background-color: #0d9b6b;
+        }
+
+        img{
             width: 400px;
             margin-top: 20px;
         }
@@ -39,96 +255,170 @@
 </head>
 
 <body>
+    <div class="navbar">
+        <a href="/dashboard"><h1 title="Back to Dashboard">🍏 NutriFit</h1></a>
+        <h1>Edit Food Details</h1>
+        <div>
+            <h1 title="User Dropdown" class="user_button">👤 {{ user.name }}</h1>
 
-<h2>Food Edit Page</h2>
+            <div class="dropdown">
+                <a href="/profile">Edit Profile</a>
+                <a href="/logout">Logout</a>
+            </div>
+        </div>
+    </div>
 
-{% if image_file %}
-    <img src="{{ url_for('static', filename='uploads/' + image_file) }}">
-{% endif %}
+    {% if image_file %}
+        <img src="{{ url_for('static', filename='uploads/' + image_file) }}">
+    {% endif %}
 
-<br><br>
+    <br><br>
 
-<button onclick="toggleEdit()">Enable Edit Mode</button>
-<button onclick="addFood()">+ Add Missing Food</button>
+    <div class="container">
+        <h2>Detected Foods</h2>
+        <button class="edit_button" onclick="toggleEdit()">Edit Mode <strong>OFF</strong></button>
 
-<h3>Detected Items</h3>
+        <hr class="header_line">
 
-<div id="list">
+        <div class="table_headers">
+            <div>No.</div>
+            <div>Food Name</div>
+            <div>Quantity</div>
+            <div class="center"></div>
+        </div>
 
-    {% for item in detections %}
-    <div class="item">
+        <div id="list">
+            {% for item in detections %}
 
-        <!-- FOOD NAME -->
-        <input type="text" value="{{ item.food }}" class="food">
+            <div class="item">
+                <div class="row_num"></div>
 
-        <!-- GRAMS -->
-        <input type="number" value="{{ item.weight }}" class="grams">
+                <input type="text" value="{{ item.food }}" class="food" disabled>
 
-        <!-- DELETE -->
-        <button onclick="removeItem(this)">Delete</button>
+                <input type="number" value="{{ item.quantity }}" class="quantity" disabled>
+
+                <div class="center">
+                    <button title="Delete Food" class="delete_food" onclick="removeItem(this)" disabled>🗑️</button>
+                </div>
+            </div>
+
+            {% endfor %}
+        </div>
+
+        <div class="add_row">
+            <button class="add_food" onclick="addFood()" disabled>+ Add Missing Food</button>
+        </div>
 
     </div>
-    {% endfor %}
 
-</div>
+    <br>
 
-<br>
+    <div class="buttons">
+        <button class="back" onclick="window.location.href='/upload'">Back</button>
+        <button class="continue" onclick="update_detections()">Continue</button>
+    </div>
 
-<button onclick="saveData()">Save Changes</button>
+    <script>
+        let editMode = false;
+        const user_button = document.querySelector(".user_button");
+        const dropdown = document.querySelector(".dropdown");
 
-<br><br>
-
-<a href="/">
-    <button>Back Home</button>
-</a>
-
-<script>
-    let editMode = true;
-
-    function toggleEdit() {
-        editMode = !editMode;
-
-        document.querySelectorAll("input").forEach(input => {
-            input.disabled = !editMode;
+        window.addEventListener("DOMContentLoaded", () => {
+            updateRowNumbers();
         });
 
-        alert(editMode ? "Edit Mode ON" : "Edit Mode OFF");
-    }
-
-    function removeItem(btn) {
-        btn.parentElement.remove();
-    }
-
-    function addFood() {
-        const list = document.getElementById("list");
-
-        const div = document.createElement("div");
-        div.className = "item";
-
-        div.innerHTML = `
-            <input type="text" placeholder="Food name" class="food">
-            <input type="number" placeholder="grams" class="grams">
-            <button onclick="removeItem(this)">Delete</button>
-        `;
-
-        list.appendChild(div);
-    }
-
-    function saveData() {
-        let items = [];
-
-        document.querySelectorAll(".item").forEach(div => {
-            let food = div.querySelector(".food").value;
-            let grams = div.querySelector(".grams").value;
-
-            items.push({ food, grams });
+        user_button.addEventListener("click", () => {
+            dropdown.classList.toggle("show");
         });
 
-        console.log("Saved Data:", items);
+        document.addEventListener("click", (event) => {
+            if(
+                !user_button.contains(event.target) &&
+                !dropdown.contains(event.target)
+            ){
+                dropdown.classList.remove("show");
+            }
 
-        alert("Changes saved (demo mode)");
-    }
-</script>
+        });
+
+        function toggleEdit() {
+            const edit_button = document.querySelector(".edit_button");
+
+            editMode = !editMode;
+
+            edit_button.classList.toggle("active");
+
+            if (edit_button.classList.contains("active")) {
+                edit_button.innerHTML = "Edit Mode <strong>ON</strong>";
+            }
+            else {
+                edit_button.innerHTML = "Edit Mode <strong>OFF</strong>";
+            }
+
+            document
+                .querySelectorAll(".food, .quantity, .delete_food, .add_food")
+                .forEach(element => {
+                    element.disabled = !editMode;
+                });
+        }
+
+        function updateRowNumbers() {
+            const rows = document.querySelectorAll("#list .item");
+
+            rows.forEach((row, index) => {
+                const row_number = row.querySelector(".row_num");
+
+                if (row_number) {
+                    row_number.textContent = index + 1;
+                }
+            });
+        }
+
+        function removeItem(btn) {
+            btn.closest(".item").remove();
+            updateRowNumbers();
+        }
+
+        function addFood() {
+            const list = document.getElementById("list");
+            const div = document.createElement("div");
+            div.className = "item";
+
+            div.innerHTML = `
+                <div class="row_num"></div>
+                <input type="text" placeholder="Food name" class="food">
+                <input type="number" placeholder="Quantity" class="quantity">
+                <div class="center">
+                    <button title="Delete Food" class="delete_food" onclick="removeItem(this)">🗑️</button>
+                </div>
+            `;
+
+            list.appendChild(div);
+            updateRowNumbers();
+        }
+
+        function update_detections() {
+            const foods = [];
+
+            document.querySelectorAll(".item").forEach(row => {
+                foods.push({
+                    food: row.querySelector(".food").value,
+                    quantity: parseInt(row.querySelector(".quantity").value)
+                });
+            });
+
+            fetch("/update_detections", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(foods)
+            })
+            
+            .then(() => {
+                window.location.href = "/result";
+            });
+        }
+    </script>
 
 </body>
+
 </html>
