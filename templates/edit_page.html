@@ -158,6 +158,13 @@
             border-radius: 6px;
         }
 
+        .food_options.error {
+            border: 1px solid #ef4444;
+            background-color: #f9d7da;
+            color: #721c24;
+            outline: none;
+        }
+
         input{
             padding: 8px 12px;
             width: 100%;
@@ -309,8 +316,7 @@
 
                     <div class="food_wrapper">
                         <input type="text" placeholder="Food name" value="{{ item.food }}" class="food" oninput="showSuggestions(this)" required>
-
-                        <select class="food_options" onchange="selectFood(this)" style="display:none;"></select>
+                        <select class="food_options" onmousedown="clearError(this)" onchange="selectFood(this)" style="display:none;"></select>
                     </div>
 
                     <input type="number" placeholder="Quantity" value="{{ item.quantity }}" class="quantity" min="1" required>
@@ -329,8 +335,7 @@
 
                     <div class="food_wrapper">
                         <input type="text" placeholder="Food name" class="food" oninput="showSuggestions(this)" required>
-
-                        <select class="food_options" onchange="selectFood(this)" style="display:none;"></select>
+                        <select class="food_options" onmousedown="clearError(this)" onchange="selectFood(this)" style="display:none;"></select>
                     </div>
 
                     <input type="number" placeholder="Quantity" class="quantity" min="1" required>
@@ -357,10 +362,12 @@
     </div>
 
     <script>
-        let editMode = true;
+        let editMode = true;        //Edit Mode is initially ON
+
         const user_button = document.querySelector(".user_button");
         const dropdown = document.querySelector(".dropdown");
 
+        //Initialization configuration settings when entering edit page
         window.addEventListener("DOMContentLoaded", () => {
             updateRowNumbers();
 
@@ -368,26 +375,26 @@
                 showSuggestions(input);
             });
 
+            //If no food detected
             const food_input = document.querySelector(".food");
             if (food_input && food_input.value === "") {
                 alert("Sorry! No food detected! Please enter the missing food manually😊");
             }
         });
 
+        // User Dropdown
         user_button.addEventListener("click", () => {
             dropdown.classList.toggle("show");
         });
 
         document.addEventListener("click", (event) => {
-            if(
-                !user_button.contains(event.target) &&
-                !dropdown.contains(event.target)
-            ){
+            if(!user_button.contains(event.target) && !dropdown.contains(event.target)){
                 dropdown.classList.remove("show");
             }
 
         });
 
+        //Edit Mode ON/OFF
         function toggleEdit() {
             const edit_button = document.querySelector(".edit_button");
 
@@ -409,6 +416,7 @@
                 });
         }
 
+        // Update row numbers when food is deleted/added
         function updateRowNumbers() {
             const rows = document.querySelectorAll("#list .item");
 
@@ -421,11 +429,13 @@
             });
         }
 
+        // Delete food
         function removeItem(btn) {
             btn.closest(".item").remove();
             updateRowNumbers();
         }
 
+        //Add missing food
         function addFood() {
             const list = document.getElementById("list");
             const div = document.createElement("div");
@@ -436,8 +446,7 @@
 
                 <div class="food_wrapper">
                     <input type="text" placeholder="Food name" class="food" oninput="showSuggestions(this)" required>
-                    
-                    <select class="food_options" onchange="selectFood(this)" style="display:none;"></select>
+                    <select class="food_options" onmousedown="clearError(this)" onchange="selectFood(this)" style="display:none;"></select>
                 </div>
 
                 <input type="number" placeholder="Quantity" class="quantity" min="1" required>
@@ -451,10 +460,15 @@
             updateRowNumbers();
         }
 
+        //Fetch food options from food database
         async function showSuggestions(input){
             const keyword = input.value.trim();
             const wrapper = input.closest(".food_wrapper");
             const dropdown = wrapper.querySelector(".food_options");
+
+            //No food is selected from the dropdown initially
+            input.setAttribute("food_selected", "false");
+            dropdown.classList.remove("error");
 
             if(keyword.length < 2){
                 dropdown.style.display = "none";
@@ -469,7 +483,7 @@
                 return;
             }
 
-            dropdown.innerHTML = `<option value="">Select food...</option>`;
+            dropdown.innerHTML = `<option value="">-- Select food option below --</option>`;
 
             foods.forEach(food => {
                 dropdown.innerHTML += `<option value="${food}">${food}</option>`;
@@ -478,31 +492,53 @@
             dropdown.style.display = "block";
         }
 
+        //Remove red colour when users click the dropdown
+        function clearError(dropdown) {
+            dropdown.classList.remove("error");
+        }
+
+        //Changes after users selected food from dropdown
         function selectFood(dropdown){
             const wrapper = dropdown.closest(".food_wrapper");
             const input = wrapper.querySelector(".food");
             
-            input.value = dropdown.value;
-
-            dropdown.style.display = "none";
+            if (dropdown.value !== "") {
+                input.value = dropdown.value;
+                input.setAttribute("food_selected", "true");
+                dropdown.classList.remove("error");
+                dropdown.style.display = "none";
+            }
         }
 
+        //Fetch updated results to backend
         function update_detections() {
             const foods = [];
 
             for (const row of document.querySelectorAll(".item")) {
                 const food_input = row.querySelector(".food");
                 const quantity_input = row.querySelector(".quantity");
+                const dropdown_select = row.querySelector(".food_options");
 
                 const food = food_input.value.trim();
                 const quantity = quantity_input.value;
+                const food_selected = food_input.getAttribute("food_selected");
 
+                //Check whether food name had been filled in
                 if (food === "") {
                     alert("Please enter the missing food name!");
                     food_input.focus();
                     return;
                 }
 
+                //Check whether users had selected food from dropdown
+                if (food_selected !== "true") {
+                    dropdown_select.style.display = "block";
+                    dropdown_select.classList.add("error");
+                    dropdown_select.focus();
+                    return;
+                }
+
+                //Check whether food quantity had been filled in and is > 0
                 if (quantity === "" || Number(quantity) < 1) {
                     alert("Please enter a quantity greater than 0!");
                     quantity_input.focus();
