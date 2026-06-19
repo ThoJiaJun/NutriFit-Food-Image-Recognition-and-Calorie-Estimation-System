@@ -362,10 +362,22 @@
     </div>
 
     <script>
-        let editMode = true;        //Edit Mode is initially ON
-
+        // User Dropdown
         const user_button = document.querySelector(".user_button");
         const dropdown = document.querySelector(".dropdown");
+
+        user_button.addEventListener("click", () => {
+            dropdown.classList.toggle("show");
+        });
+
+        document.addEventListener("click", (event) => {
+            if(!user_button.contains(event.target) && !dropdown.contains(event.target)){
+                dropdown.classList.remove("show");
+            }
+
+        });
+
+        let editMode = true;        //Edit Mode is initially ON
 
         //Initialization configuration settings when entering edit page
         window.addEventListener("DOMContentLoaded", () => {
@@ -380,18 +392,6 @@
             if (food_input && food_input.value === "") {
                 alert("Sorry! No food detected! Please enter the missing food manually😊");
             }
-        });
-
-        // User Dropdown
-        user_button.addEventListener("click", () => {
-            dropdown.classList.toggle("show");
-        });
-
-        document.addEventListener("click", (event) => {
-            if(!user_button.contains(event.target) && !dropdown.contains(event.target)){
-                dropdown.classList.remove("show");
-            }
-
         });
 
         //Edit Mode ON/OFF
@@ -560,7 +560,7 @@
             .then(() => {
                 window.location.href = "/result";
             });
-}
+        }
     </script>
 
 </body>

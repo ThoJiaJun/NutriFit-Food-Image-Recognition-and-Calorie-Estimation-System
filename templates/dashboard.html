@@ -14,7 +14,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             border-bottom: 1px solid #666;
             background-color: #a3f6ce;
         }
@@ -63,9 +63,12 @@
             border-radius: 20px;
             padding: 30px;
         }
+        p{
+            margin: 0;
+        }
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px,1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             margin: 20px 0;
         }
@@ -90,22 +93,28 @@
             text-decoration: none;
             color: inherit;
         }
+        .progress_card {
+            grid-column: 1 / -1;
+        }
         .progress-bar {
             background: #ddd;
             border-radius: 10px;
             overflow: hidden;
             height: 20px;
+            margin: 10px 0;
         }
         .progress-fill {
-            background: #764ba2;
+            background: #10b981;
             width: 0%;
             height: 100%;
+            transition: width 1.5s ease-in-out;
         }
         button {
             background: #10b981;
             color: white;
             border: none;
             padding: 12px;
+            margin-top: 20px;
             width: 100%;
             border-radius: 12px;
             cursor: pointer;
@@ -133,7 +142,7 @@
     <p>Welcome back, <strong>{{ user.name }}</strong>!</p>
 
     <div class="grid">
-        <div class="card">
+        <div class="card progress_card">
             <h3>📊 Today's Progress</h3>
             <div><span id="todayCalories"></span> / <span id="dailyGoal"></span> kcal</div>
             <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
@@ -154,6 +163,19 @@
 </div>
 
 <script>
+    window.addEventListener("DOMContentLoaded", () => {
+        const progressFill = document.getElementById("progressFill");
+        const currentCalories = 1000; 
+        const goalCalories = 2000;
+        const percentage = (currentCalories / goalCalories) * 100;
+
+        // Run task after the timer finish
+        setTimeout(() => {
+            progressFill.style.width = `${percentage}%`;
+        }, 100);
+    });
+
+    // Users Dropdown
     const user_button = document.querySelector(".user_button");
     const dropdown = document.querySelector(".dropdown");
 
