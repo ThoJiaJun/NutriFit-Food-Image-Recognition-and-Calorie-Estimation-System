@@ -74,7 +74,12 @@ def login():
 
         if user and user.check_password(password):
             session['user_id'] = user.id
-            return redirect(url_for('dashboard'))
+
+            if not user.age or not user.gender or not user.activity_level or not user.goal:
+                flash('Welcome to NutriFit! Please complete your profile to get started.', 'success')
+                return redirect(url_for('profile'))
+            else:
+                return redirect(url_for('dashboard'))
         else:
             flash('Invalid email or password!', 'danger')
     
@@ -261,6 +266,10 @@ def dashboard():
         return redirect(url_for('login'))
 
     user = User.query.get_or_404(session['user_id'])
+
+    if not user.age or not user.gender or not user.activity_level or not user.goal:
+        flash('Please fill out your personal info to view your dashboard.', 'danger')
+        return redirect(url_for('profile'))
     
     daily_goal = get_daily_calorie_goal(user)
     
