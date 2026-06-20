@@ -146,14 +146,144 @@ def reset_password(email):
 
 ###################
 # Dashboard Logic #
-###################
+################### 
+def get_daily_calorie_goal(user):
+    
+    # MAP Gender
+    if user.gender == "male":
+        gender = "male"
+    elif user.gender == "female":
+        gender = "female"
+
+    # MAP Age Group
+    if 13 <= user.age <= 17:
+        age_group = "13-17"
+    elif 18 <= user.age <= 30:
+        age_group = "18-30"
+    elif 31 <= user.age <= 50:
+        age_group = "31-50"
+    elif 51 <= user.age <= 70:
+        age_group = "51-70"
+    elif user.age > 70:
+        age_group = ">70"
+    
+    # MAP Activity Level
+    if user.activity_level == "sedentary":
+        activity = "sedentary"
+    elif user.activity_level == "light":
+        activity = "lightly active"
+    elif user.activity_level == "moderate":
+        activity = "moderately active"
+    elif user.activity_level == "active":
+        activity = "very active"
+    
+    # MAP Goal
+    if user.goal == "lose":
+        goal = "lose weight"
+    if user.goal == "maintain":
+        goal = "maintain weight"
+    if user.goal == "gain":
+        goal = "gain muscle"
+    
+    # Recommended daily calorie intake for users in different situations
+    calorie_matrix = {
+        "male": {
+            "13-17": {
+                "sedentary": {"lose weight": 1900, "maintain weight": 2000, "gain muscle": 2300},
+                "lightly active": {"lose weight": 1900, "maintain weight": 2200, "gain muscle": 2500},
+                "moderately active": {"lose weight": 1900, "maintain weight": 2400, "gain muscle": 2700},
+                "very active": {"lose weight": 2300, "maintain weight": 2800, "gain muscle": 3100}
+            },
+            "18-30": {
+                "sedentary": {"lose weight": 1900, "maintain weight": 2400, "gain muscle": 2700},
+                "lightly active": {"lose weight": 2000, "maintain weight": 2500, "gain muscle": 2800},
+                "moderately active": {"lose weight": 2100, "maintain weight": 2600, "gain muscle": 2900},
+                "very active": {"lose weight": 2500, "maintain weight": 3000, "gain muscle": 3300}
+            },
+            "31-50": {
+                "sedentary": {"lose weight": 1700, "maintain weight": 2200, "gain muscle": 2500},
+                "lightly active": {"lose weight": 1800, "maintain weight": 2300, "gain muscle": 2600},
+                "moderately active": {"lose weight": 1900, "maintain weight": 2400, "gain muscle": 2700},
+                "very active": {"lose weight": 2300, "maintain weight": 2800, "gain muscle": 3100}
+            },
+            "51-70": {
+                "sedentary": {"lose weight": 1500, "maintain weight": 2000, "gain muscle": 2300},
+                "lightly active": {"lose weight": 1600, "maintain weight": 2100, "gain muscle": 2400},
+                "moderately active": {"lose weight": 1700, "maintain weight": 2200, "gain muscle": 2500},
+                "very active": {"lose weight": 2100, "maintain weight": 2600, "gain muscle": 2900}
+            },
+            ">70": {
+                "sedentary": {"lose weight": 1300, "maintain weight": 1800, "gain muscle": 2100},
+                "lightly active": {"lose weight": 1400, "maintain weight": 1900, "gain muscle": 2200},
+                "moderately active": {"lose weight": 1500, "maintain weight": 2000, "gain muscle": 2300},
+                "very active": {"lose weight": 1700, "maintain weight": 2200, "gain muscle": 2500}
+            }
+        },
+        "female": {
+            "13-17": {
+                "sedentary": {"lose weight": 1500, "maintain weight": 1600, "gain muscle": 2100},
+                "lightly active": {"lose weight": 1500, "maintain weight": 1700, "gain muscle": 2200},
+                "moderately active": {"lose weight": 1500, "maintain weight": 1800, "gain muscle": 2300},
+                "very active": {"lose weight": 1900, "maintain weight": 2200, "gain muscle": 2700}
+            },
+            "18-30": {
+                "sedentary": {"lose weight": 1300, "maintain weight": 1800, "gain muscle": 2100},
+                "lightly active": {"lose weight": 1400, "maintain weight": 1900, "gain muscle": 2200},
+                "moderately active": {"lose weight": 1500, "maintain weight": 2000, "gain muscle": 2300},
+                "very active": {"lose weight": 1900, "maintain weight": 2400, "gain muscle": 2700}
+            },
+            "31-50": {
+                "sedentary": {"lose weight": 1300, "maintain weight": 1800, "gain muscle": 2100},
+                "lightly active": {"lose weight": 1400, "maintain weight": 1900, "gain muscle": 2200},
+                "moderately active": {"lose weight": 1500, "maintain weight": 2000, "gain muscle": 2300},
+                "very active": {"lose weight": 1700, "maintain weight": 2200, "gain muscle": 2500}
+            },
+            "51-70": {
+                "sedentary": {"lose weight": 1100, "maintain weight": 1600, "gain muscle": 1900},
+                "lightly active": {"lose weight": 1200, "maintain weight": 1700, "gain muscle": 2000},
+                "moderately active": {"lose weight": 1300, "maintain weight": 1800, "gain muscle": 2100},
+                "very active": {"lose weight": 1500, "maintain weight": 2000, "gain muscle": 2300}
+            },
+            ">70": {
+                "sedentary": {"lose weight": 1100, "maintain weight": 1600, "gain muscle": 1900},
+                "lightly active": {"lose weight": 1200, "maintain weight": 1600, "gain muscle": 1900},
+                "moderately active": {"lose weight": 1300, "maintain weight": 1700, "gain muscle": 2000},
+                "very active": {"lose weight": 1400, "maintain weight": 1800, "gain muscle": 2100}
+            }
+        }
+    }
+
+    return calorie_matrix[gender][age_group][activity][goal]
+
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
     user = User.query.get_or_404(session['user_id'])
-    return render_template('dashboard.html', user = user)
+    
+    daily_goal = get_daily_calorie_goal(user)
+    
+    today = datetime.now().strftime("%Y-%m-%d")
+    current_calories = 0
+
+    connection = sqlite3.connect("database/meal_history.db")
+    cursor = connection.cursor()
+
+    # SUM up all calories consumed by user today
+    cursor.execute("""
+        SELECT SUM(calories) 
+        FROM meal_history 
+        WHERE user_id = ? AND date = ?
+    """, (session["user_id"], today))
+
+    result = cursor.fetchone()
+    if result and result[0] is not None:
+        current_calories = int(result[0])
+    
+    connection.close()
+
+    return render_template('dashboard.html', user = user, daily_goal = daily_goal, current_calories = current_calories)
 
 ################
 # Logout Logic #

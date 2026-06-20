@@ -144,9 +144,9 @@
     <div class="grid">
         <div class="card progress_card">
             <h3>📊 Today's Progress</h3>
-            <div><span id="todayCalories"></span> / <span id="dailyGoal"></span> kcal</div>
+            <div><span id="todayCalories">{{ current_calories }}</span> / <span id="dailyGoal">{{ daily_goal }}</span> kcal</div>
             <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
-            <div>🔥 Remaining: <span id="remaining"></span> kcal</div>
+            <div>🔥 Remaining: <span id="remaining"></span></div>
         </div>
         <div class="card">
             <h3>📸 Update Meal</h3>
@@ -165,13 +165,27 @@
 <script>
     window.addEventListener("DOMContentLoaded", () => {
         const progressFill = document.getElementById("progressFill");
-        const currentCalories = 1000; 
-        const goalCalories = 2000;
+        const remainingText = document.getElementById("remaining");
+        const currentCalories = parseInt(document.getElementById("todayCalories").innerText) || 0; 
+        const goalCalories = parseInt(document.getElementById("dailyGoal").innerText) || 2000;
         const percentage = (currentCalories / goalCalories) * 100;
+        const remainingCalories = goalCalories - currentCalories;
+
+        if (remainingCalories >= 0) {
+            remainingText.innerText = `${remainingCalories} kcal`;
+        }
+        else {
+            const exceededCalorie = Math.abs(remainingCalories);
+            remainingText.innerHTML = `Daily limit exceeded. Please control your meals.<strong style="color: #b91c1c; margin-left: 5px;">(Exceeded by ${exceededCalorie} kcal)</strong>`;
+        }
 
         // Run task after the timer finish
         setTimeout(() => {
             progressFill.style.width = `${percentage}%`;
+
+            if (remainingCalories < 0) {
+                progressFill.style.backgroundColor = "#b91c1c";
+            }
         }, 100);
     });
 
