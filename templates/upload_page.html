@@ -200,12 +200,14 @@
     </form>
 
     <script>
+        const user_button = document.querySelector(".user_button");
+        const dropdown = document.querySelector(".dropdown");
         const img_file = document.getElementById("img_file");
         const preview = document.getElementById("preview");
         const upload_label = document.getElementById("upload");
-        const user_button = document.querySelector(".user_button");
-        const dropdown = document.querySelector(".dropdown");
+        const container = document.querySelector(".container");
 
+        // User Dropdown
         user_button.addEventListener("click", () => {
             dropdown.classList.toggle("show");
         });
@@ -219,15 +221,17 @@
             }
         });
 
-        img_file.addEventListener('change', function(){
+        // Img Upload
+        img_file.addEventListener("change", function(){
             const file = this.files[0];
 
             if(file){
                 const reader = new FileReader();
 
-                reader.addEventListener('load', function(){
+                // Display preview img
+                reader.addEventListener("load", function(){
                     preview.src = this.result;
-                    preview.style.display = 'block';
+                    preview.style.display = "block";
                     upload_label.style.display = "none";
                 });
 
@@ -235,6 +239,19 @@
             }
         });
 
+        // Drag and Drop img
+        container.addEventListener("dragover", e => e.preventDefault());    // Prevent browser from opening the img in new tab
+
+        container.addEventListener("drop", (e) => {
+            e.preventDefault();
+
+            if(e.dataTransfer.files.length > 0){
+                img_file.files = e.dataTransfer.files;          // Assign the dropped img to the input
+                img_file.dispatchEvent(new Event("change"));    // Preview the dropped img
+            }
+        });
+
+        // Reset container to blank state
         function reset_image(){
             img_file.value = "";
             preview.src = "";
@@ -242,6 +259,7 @@
             upload_label.style.display = "block";
         }
 
+        // Check if img exists
         function confirm_image(){
             if(!img_file.files.length){
                 alert("Please upload an image first!");
