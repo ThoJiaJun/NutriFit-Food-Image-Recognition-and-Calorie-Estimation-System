@@ -27,9 +27,6 @@ if not os.path.exists(MODEL_PATH):
 model = YOLO(MODEL_PATH)
 
 
-# -------------------------
-# FOOD WEIGHT MAP
-# -------------------------
 FOOD_WEIGHT_MAP = {
     "ais kacang": 300,
     "apam balik": 150,
@@ -45,9 +42,11 @@ FOOD_WEIGHT_MAP = {
     "boiled egg": 50,
     "bread": 30,
     "brownie": 60,
+    "broccoli": 150,
     "burger": 250,
     "cake": 100,
     "carbonara": 350,
+    "carrot": 60,
     "cauliflower": 150,
     "cherry": 8,
     "chicken nugget": 20,
@@ -55,7 +54,9 @@ FOOD_WEIGHT_MAP = {
     "chip": 3,
     "chocolate": 25,
     "churros": 40,
+    "cooked fish": 120,
     "corn": 100,
+    "crab": 200,
     "cream": 30,
     "crossaint": 70,
     "cucumber": 200,
@@ -63,13 +64,21 @@ FOOD_WEIGHT_MAP = {
     "curry": 250,
     "curry puff": 70,
     "donut": 70,
-    "boiled egg": 50,
+    "dragonfruit": 350,
+    "dumpling": 35,
+    "durian": 90,
+    "edamame bean": 100,
+    "fishball": 25,
+    "fried chicken": 150,
     "fried egg": 55,
+    "fried fish": 130,
     "french fries": 120,
     "fried rice": 350,
     "green apple": 180,
     "hot dog": 180,
     "ice cream": 100,
+    "lemon": 10,
+    "lime": 10,
     "omelette": 120,
     "onion": 110,
     "orange": 180,
@@ -78,6 +87,7 @@ FOOD_WEIGHT_MAP = {
     "sausages": 75,
     "scrambled egg": 100,
     "strawberry": 15,
+    "tomato": 120,
     "waffle": 100,
     "watermelon": 300
 }
