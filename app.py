@@ -64,6 +64,7 @@ latest_detections = []
 ####################
 # Login Page Logic #
 ####################
+@app.route('/')
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
