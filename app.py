@@ -349,12 +349,20 @@ def upload_img():
         image_path = os.path.join(UPLOAD_FOLDER, filename)
         file.save(image_path)
 
-        # Run YOLO
-        results = model(image_path)[0]
+        # Shrink img if it is too large
         img = cv2.imread(image_path)
-        detections = []
+        h, w = img.shape[:2]
+        if max(h, w) > 640:  # YOLO's default internal size is 640x640
+            scale = 640 / max(h, w)
+            img = cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+            cv2.imwrite(image_path, img)
+        
+        # Run YOLO (cut RAM in half)
+        results = model(image_path, half=True)[0]
 
         # DETECTION LOOP
+        detections = []
+
         for box in results.boxes:
             confidence = float(box.conf[0])
 
