@@ -2,12 +2,10 @@ from flask import Flask, render_template, request, redirect, session, url_for, f
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from datetime import datetime, timezone
-import time
 import calendar
 import sqlite3
 import os
-import cv2
-from ultralytics import YOLO
+import requests
 
 app = Flask(__name__)
 
@@ -43,23 +41,6 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
     print("Database tables created successfully.")
-
-# PATH SETUP #
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
-MODEL_PATH = os.path.join(BASE_DIR, "model", "yolo11s_best.pt")
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# LOAD MODEL (LOCAL ONLY) #
-if not os.path.exists(MODEL_PATH):
-    raise FileNotFoundError("Model not found in /model folder!")
-
-model = YOLO(MODEL_PATH)
-
-# TEMP STORAGE #
-latest_image = None
-latest_detections = []
 
 ####################
 # Login Page Logic #
@@ -331,6 +312,17 @@ def profile():
 #####################
 # Upload Page Logic #
 #####################
+
+# PATH SETUP #
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# TEMP STORAGE #
+latest_image = None
+latest_detections = []
+
 @app.route("/upload", methods=['GET', 'POST'])
 def upload_img():
     if "user_id" not in session:
@@ -344,89 +336,32 @@ def upload_img():
         if file.filename == "":
             return "No file selected"
 
-        # Save image
-        filename = str(int(time.time())) + "_" + file.filename
-        image_path = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(image_path)
+        # HUGGING FACE API URL SETUP #
+        hf_api_url = "https://nutrifit-model-nutrifit-yolo-api.hf.space/predict"
 
-        # Shrink img if it is too large
-        img = cv2.imread(image_path)
-        h, w = img.shape[:2]
-        if max(h, w) > 640:  # YOLO's default internal size is 640x640
-            scale = 640 / max(h, w)
-            img = cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
-            cv2.imwrite(image_path, img)
+        # Forward the uploaded file over HTTP streams
+        file.seek(0)
+        files = {"file": (file.filename, file.read(), file.content_type)}
         
-        # Run YOLO (cut RAM in half)
-        results = model(image_path, half=True)[0]
+        try:
+            response = requests.post(hf_api_url, files=files)
+            response_data = response.json()
+        except Exception as e:
+            return f"AI Server Error: {str(e)}"
 
-        # DETECTION LOOP
-        detections = []
+        # Extract labels returned from Hugging Face
+        detected_labels = response_data.get("detections", [])
 
-        for box in results.boxes:
-            confidence = float(box.conf[0])
-
-            # Ignore weak detections
-            if confidence < 0.25:
-                continue
-
-            cls_id = int(box.cls[0])
-
-            label = model.names[cls_id]
-
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
-
-            # DRAW BOX
-            cv2.rectangle(
-                img,
-                (x1, y1),
-                (x2, y2),
-                (0, 255, 0),
-                2
-            )
-
-            # LABEL TEXT
-            text = f"{label}"
-
-            cv2.putText(
-                img,
-                text,
-                (x1, y1 - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                (0, 255, 0),
-                2
-            )
-
-            detections.append({
-                "food": label
-            })
-
-        # If nothing detected
-        if not detections:
+        # If nothing was detected
+        if not detected_labels:
             session["detections"] = []
-            session["boxed_image"] = filename
-            return redirect(url_for("edit_page"))
+            session["detections"] = []
+            return redirect(url_for("edit_page", image_file = file.filename))
         
-        # SAVE OUTPUT IMAGE ONLY IF THERE ARE DETECTIONS
-        output_filename = "boxed_" + filename
-
-        output_path = os.path.join(
-            UPLOAD_FOLDER,
-            output_filename
-        )
-
-        cv2.imwrite(output_path, img)
-            
         # GROUP SAME FOOD + COUNT
         grouped = {}
-
-        for item in detections:
-
-            label = item["food"]
-
+        for label in detected_labels:
             if label not in grouped:
-
                 grouped[label] = {
                     "food": label,
                     "quantity": 1
@@ -436,11 +371,11 @@ def upload_img():
 
         latest_detections = list(grouped.values())
 
-        session["food_name"] = detections[0]["food"]
+        # Store data into the session cookie tracking
+        session["food_name"] = latest_detections[0]["food"]
         session["detections"] = latest_detections
-        session["boxed_image"] = output_filename
 
-        return redirect(url_for("edit_page"))
+        return render_template("edit_page.html", user = user, detections = latest_detections, image_file = file.filename)
     
     return render_template("upload_page.html", user = user)
 
