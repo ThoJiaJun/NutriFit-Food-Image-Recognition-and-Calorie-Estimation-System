@@ -352,11 +352,6 @@ def upload_img():
         # Extract labels returned from Hugging Face
         detected_labels = response_data.get("detections", [])
         boxed_image = response_data.get("boxed_image_base64", "")
-
-        # If nothing was detected
-        if not detected_labels:
-            session["detections"] = []
-            return redirect(url_for("edit_page", image_file = file.filename))
         
         # GROUP SAME FOOD + COUNT
         grouped = {}
@@ -372,7 +367,11 @@ def upload_img():
         latest_detections = list(grouped.values())
 
         # Store data into the session cookie tracking
-        session["food_name"] = latest_detections[0]["food"]
+        if latest_detections:
+            session["food_name"] = latest_detections[0]["food"]
+        else:
+            session["food_name"] = ""
+            
         session["detections"] = latest_detections
 
         return render_template("edit_page.html", user = user, detections = latest_detections, boxed_image = boxed_image)
