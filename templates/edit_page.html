@@ -287,8 +287,8 @@
         </div>
     </div>
 
-    {% if image_file %}
-        <img src="{{ url_for('static', filename='uploads/' + image_file) }}">
+    {% if boxed_image %}
+        <img src="data:image/jpeg;base64,{{ boxed_image }}">
     {% endif %}
 
     <br><br>
